@@ -1,0 +1,12 @@
+[project]
+name = "astil-codex-core-simulator"
+version = "0.1.0"
+description = "Dependency-free reference simulator for Astil Codex core policy behavior"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 100
+
+[tool.pyright]
+pythonVersion = "3.11"
+typeCheckingMode = "strict"

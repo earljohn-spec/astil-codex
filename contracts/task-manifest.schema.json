@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://astilcodex.local/contracts/task-manifest.schema.json",
+  "title": "Astil Codex Task Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "taskId",
+    "taskType",
+    "complexity",
+    "dataSensitivity",
+    "internetRequired",
+    "reasoningLocation",
+    "executionLocation",
+    "requiredTools",
+    "confirmationRequired"
+  ],
+  "properties": {
+    "contractVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "taskId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "taskType": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$"
+    },
+    "complexity": {
+      "enum": ["low", "medium", "high"]
+    },
+    "dataSensitivity": {
+      "enum": ["public", "personal", "confidential", "secret"]
+    },
+    "internetRequired": {
+      "type": "boolean"
+    },
+    "reasoningLocation": {
+      "enum": ["local", "cloud", "ask", "unavailable"]
+    },
+    "executionLocation": {
+      "enum": ["local", "authorized_remote", "none"]
+    },
+    "requiredTools": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_.-]*$"
+      },
+      "uniqueItems": true
+    },
+    "confirmationRequired": {
+      "type": "boolean"
+    },
+    "estimatedCloudCost": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "explanation": {
+      "type": "string",
+      "maxLength": 2000
+    }
+  }
+}

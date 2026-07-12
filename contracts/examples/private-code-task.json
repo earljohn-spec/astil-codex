@@ -1,0 +1,14 @@
+{
+  "contractVersion": "1.0",
+  "taskId": "task-example-private-code",
+  "taskType": "code.modify_project",
+  "complexity": "high",
+  "dataSensitivity": "confidential",
+  "internetRequired": false,
+  "reasoningLocation": "local",
+  "executionLocation": "local",
+  "requiredTools": ["files.read", "files.write", "git", "terminal.workspace"],
+  "confirmationRequired": true,
+  "estimatedCloudCost": null,
+  "explanation": "Confidential project context remains local; modifications execute only in the approved workspace."
+}
