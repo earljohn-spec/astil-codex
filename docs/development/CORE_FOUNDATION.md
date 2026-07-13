@@ -43,13 +43,15 @@ The CLI uses `MockChatProvider`. It never contacts a cloud provider or local AI 
 - Workspace writes, commands, Blender execution, and other consequential operations require approval.
 - Mock responses stream in chunks and emit avatar-state events for a future Unity client.
 
-## Deliberately deferred
+## Added after this foundation
 
-- SQLite production package and migrations
-- Named-pipe IPC
+SQLite conversation memory and versioned named-pipe IPC are now implemented. See [LOCAL_MEMORY_AND_IPC.md](LOCAL_MEMORY_AND_IPC.md).
+
+## Still deferred
+
 - Real local/cloud providers
 - Unity client
 - Speech recognition and synthesis
 - File, Git, terminal, and Blender tool workers
 
-These are added only after the foundation compiles and its security rules pass on Windows and GitHub Actions.
+These are added only after each earlier security boundary compiles and passes on Windows and GitHub Actions.

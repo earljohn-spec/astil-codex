@@ -3,6 +3,7 @@ using AstilCodex.Core.Conversation;
 using AstilCodex.Core.Permissions;
 using AstilCodex.Core.Providers;
 using AstilCodex.Core.Routing;
+using AstilCodex.Memory;
 
 namespace AstilCodex.Core.Cli;
 
@@ -15,7 +16,14 @@ internal static class Program
         var classifier = new TaskClassifier();
         var provider = new MockChatProvider();
         var orchestrator = new ConversationOrchestrator(provider, router, classifier);
-        var history = new List<ChatMessage>();
+        const string sessionId = "cli-development";
+        var store = new SqliteConversationStore(
+            SqliteConversationStore.GetDefaultDatabasePath());
+        await store.InitializeAsync().ConfigureAwait(false);
+        var storedMessages = await store.GetMessagesAsync(sessionId).ConfigureAwait(false);
+        var history = storedMessages
+            .Select(message => new ChatMessage(message.Role, message.Content, message.CreatedAt))
+            .ToList();
         var mode = AssistantMode.Companion;
         var policy = ProcessingPolicy.AutoPrivacyFirst;
         var hardware = HardwareProfile.Development;
@@ -32,7 +40,7 @@ internal static class Program
             currentRequest.Cancel();
         };
 
-        PrintHeader(provider.ProviderId);
+        PrintHeader(provider.ProviderId, store.DatabasePath, history.Count);
 
         while (true)
         {
@@ -53,18 +61,34 @@ internal static class Program
                 continue;
             }
 
+            if (string.Equals(input.Trim(), "/history", StringComparison.OrdinalIgnoreCase))
+            {
+                PrintHistory(history);
+                continue;
+            }
+
+            if (string.Equals(input.Trim(), "/memory clear", StringComparison.OrdinalIgnoreCase))
+            {
+                await store.ClearAllAsync().ConfigureAwait(false);
+                history.Clear();
+                Console.WriteLine("Local conversation memory cleared.");
+                continue;
+            }
+
             if (TryHandleCommand(input, ref mode, ref policy))
             {
                 continue;
             }
 
+            await store.UpsertSessionAsync(sessionId, mode).ConfigureAwait(false);
             var request = new ChatRequest(
-                SessionId: "cli-development",
+                SessionId: sessionId,
                 Mode: mode,
                 UserText: input,
                 History: history.ToArray());
 
             history.Add(new ChatMessage("user", input, DateTimeOffset.UtcNow));
+            await store.AddMessageAsync(sessionId, "user", input).ConfigureAwait(false);
             currentRequest = new CancellationTokenSource();
             Console.ForegroundColor = ConsoleColor.Magenta;
             Console.Write("Astil: ");
@@ -76,8 +100,16 @@ internal static class Program
                     request,
                     policy,
                     hardware,
-                    stateChanged: state => WriteState(state),
-                    chunkReceived: chunk => Console.Write(chunk),
+                    stateChanged: (state, _) =>
+                    {
+                        WriteState(state);
+                        return ValueTask.CompletedTask;
+                    },
+                    chunkReceived: (chunk, _) =>
+                    {
+                        Console.Write(chunk);
+                        return ValueTask.CompletedTask;
+                    },
                     cancellationToken: currentRequest.Token);
 
                 if (result.Manifest.ReasoningLocation == ReasoningLocation.Ask ||
@@ -89,6 +121,8 @@ internal static class Program
                 Console.WriteLine();
                 WriteManifest(result.Manifest);
                 history.Add(new ChatMessage("assistant", result.Text, DateTimeOffset.UtcNow));
+                await store.AddMessageAsync(sessionId, "assistant", result.Text)
+                    .ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -101,7 +135,7 @@ internal static class Program
             }
         }
 
-        Console.WriteLine("Session closed. Local mock data was not persisted.");
+        Console.WriteLine("Session closed. Conversation memory remains stored locally.");
         return 0;
     }
 
@@ -115,7 +149,7 @@ internal static class Program
 
         if (command == "/help")
         {
-            Console.WriteLine("Commands: /mode <name>, /policy <name>, /help, /quit");
+            Console.WriteLine("Commands: /mode <name>, /policy <name>, /history, /memory clear, /help, /quit");
             Console.WriteLine("Modes: companion, assistant, focus, developer, creator");
             Console.WriteLine("Policies: auto, local, cloud, ask");
             return true;
@@ -177,14 +211,31 @@ internal static class Program
         return true;
     }
 
-    private static void PrintHeader(string providerId)
+    private static void PrintHeader(string providerId, string databasePath, int historyCount)
     {
         Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine("Astil Codex Core · executable foundation");
+        Console.WriteLine("Astil Codex Core · local memory milestone");
         Console.ResetColor();
         Console.WriteLine($"Provider: {providerId} (offline simulation)");
+        Console.WriteLine($"Memory: {databasePath}");
+        Console.WriteLine($"Loaded messages: {historyCount}");
         Console.WriteLine("No files, cloud services, microphones, or computer tools are connected.");
         Console.WriteLine("Enter /help for commands or /quit to close.\n");
+    }
+
+    private static void PrintHistory(IReadOnlyList<ChatMessage> history)
+    {
+        if (history.Count == 0)
+        {
+            Console.WriteLine("No messages are stored in this session.");
+            return;
+        }
+
+        Console.WriteLine("Recent local conversation:");
+        foreach (var message in history.TakeLast(10))
+        {
+            Console.WriteLine($"  {message.Role}: {message.Content}");
+        }
     }
 
     private static void WriteState(AvatarStateEvent state)

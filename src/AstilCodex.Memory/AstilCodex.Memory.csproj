@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>AstilCodex.Memory</RootNamespace>
+    <AssemblyName>AstilCodex.Memory</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AstilCodex.Contracts\AstilCodex.Contracts.csproj" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.28" />
+  </ItemGroup>
+</Project>

@@ -1,4 +1,4 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -9,6 +9,14 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AstilCodex.Core.Cli", "src\AstilCodex.Core.Cli\AstilCodex.Core.Cli.csproj", "{0735B31E-3218-43AA-93A4-2DA821088F64}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AstilCodex.Core.SelfTest", "tests\AstilCodex.Core.SelfTest\AstilCodex.Core.SelfTest.csproj", "{3069FDC2-CD75-4EDE-8497-1B5FD8FAFA39}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1C43DF8F-F343-4B2F-B252-48C6506DA8D3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AstilCodex.Memory", "src\AstilCodex.Memory\AstilCodex.Memory.csproj", "{B72D2823-6F57-48D2-ABEA-0CF9BE4B86C9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AstilCodex.Ipc", "src\AstilCodex.Ipc\AstilCodex.Ipc.csproj", "{CBA01BEE-F5BD-4EAF-9789-40709BE65C84}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AstilCodex.Core.Host", "src\AstilCodex.Core.Host\AstilCodex.Core.Host.csproj", "{CE5EAF67-C550-4FCC-A724-641CDEC72AFC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,5 +40,22 @@ Global
 		{3069FDC2-CD75-4EDE-8497-1B5FD8FAFA39}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3069FDC2-CD75-4EDE-8497-1B5FD8FAFA39}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3069FDC2-CD75-4EDE-8497-1B5FD8FAFA39}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B72D2823-6F57-48D2-ABEA-0CF9BE4B86C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B72D2823-6F57-48D2-ABEA-0CF9BE4B86C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B72D2823-6F57-48D2-ABEA-0CF9BE4B86C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B72D2823-6F57-48D2-ABEA-0CF9BE4B86C9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CBA01BEE-F5BD-4EAF-9789-40709BE65C84}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CBA01BEE-F5BD-4EAF-9789-40709BE65C84}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CBA01BEE-F5BD-4EAF-9789-40709BE65C84}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CBA01BEE-F5BD-4EAF-9789-40709BE65C84}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CE5EAF67-C550-4FCC-A724-641CDEC72AFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE5EAF67-C550-4FCC-A724-641CDEC72AFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE5EAF67-C550-4FCC-A724-641CDEC72AFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE5EAF67-C550-4FCC-A724-641CDEC72AFC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B72D2823-6F57-48D2-ABEA-0CF9BE4B86C9} = {1C43DF8F-F343-4B2F-B252-48C6506DA8D3}
+		{CBA01BEE-F5BD-4EAF-9789-40709BE65C84} = {1C43DF8F-F343-4B2F-B252-48C6506DA8D3}
+		{CE5EAF67-C550-4FCC-A724-641CDEC72AFC} = {1C43DF8F-F343-4B2F-B252-48C6506DA8D3}
 	EndGlobalSection
 EndGlobal

@@ -22,8 +22,8 @@ public sealed class ConversationOrchestrator(
         ChatRequest request,
         ProcessingPolicy policy,
         HardwareProfile hardware,
-        Action<AvatarStateEvent>? stateChanged = null,
-        Action<string>? chunkReceived = null,
+        Func<AvatarStateEvent, CancellationToken, ValueTask>? stateChanged = null,
+        Func<string, CancellationToken, ValueTask>? chunkReceived = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -33,7 +33,10 @@ public sealed class ConversationOrchestrator(
 
         if (manifest.ReasoningLocation == ReasoningLocation.Unavailable)
         {
-            stateChanged?.Invoke(AvatarStateEvent.Now(AvatarState.Error, manifest.Explanation));
+            await ReportStateAsync(
+                stateChanged,
+                AvatarStateEvent.Now(AvatarState.Error, manifest.Explanation),
+                cancellationToken).ConfigureAwait(false);
             return new ChatResult(manifest.Explanation, manifest, stopwatch.Elapsed);
         }
 
@@ -41,34 +44,80 @@ public sealed class ConversationOrchestrator(
         {
             const string approvalMessage =
                 "Provider selection requires your approval before this request can continue.";
-            stateChanged?.Invoke(AvatarStateEvent.Now(AvatarState.Ready, approvalMessage));
+            await ReportStateAsync(
+                stateChanged,
+                AvatarStateEvent.Now(AvatarState.Ready, approvalMessage),
+                cancellationToken).ConfigureAwait(false);
             return new ChatResult(approvalMessage, manifest, stopwatch.Elapsed);
         }
 
-        stateChanged?.Invoke(AvatarStateEvent.Now(AvatarState.Thinking, "Preparing response"));
+        await ReportStateAsync(
+            stateChanged,
+            AvatarStateEvent.Now(AvatarState.Thinking, "Preparing response"),
+            cancellationToken).ConfigureAwait(false);
         var buffer = new StringBuilder();
 
         try
         {
-            stateChanged?.Invoke(AvatarStateEvent.Now(AvatarState.Speaking, "Streaming response"));
+            await ReportStateAsync(
+                stateChanged,
+                AvatarStateEvent.Now(AvatarState.Speaking, "Streaming response"),
+                cancellationToken).ConfigureAwait(false);
             await foreach (var chunk in _chatProvider.StreamReplyAsync(request, cancellationToken))
             {
                 buffer.Append(chunk);
-                chunkReceived?.Invoke(chunk);
+                if (chunkReceived is not null)
+                {
+                    await chunkReceived(chunk, cancellationToken).ConfigureAwait(false);
+                }
             }
 
-            stateChanged?.Invoke(AvatarStateEvent.Now(AvatarState.Ready, "Response complete"));
+            await ReportStateAsync(
+                stateChanged,
+                AvatarStateEvent.Now(AvatarState.Ready, "Response complete"),
+                cancellationToken).ConfigureAwait(false);
             return new ChatResult(buffer.ToString(), manifest, stopwatch.Elapsed);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            stateChanged?.Invoke(AvatarStateEvent.Now(AvatarState.Cancelled, "Request cancelled"));
+            await ReportStateWithoutCancellationAsync(
+                stateChanged,
+                AvatarStateEvent.Now(AvatarState.Cancelled, "Request cancelled"))
+                .ConfigureAwait(false);
             throw;
         }
         catch (Exception exception)
         {
-            stateChanged?.Invoke(AvatarStateEvent.Now(AvatarState.Error, exception.Message));
+            await ReportStateWithoutCancellationAsync(
+                stateChanged,
+                AvatarStateEvent.Now(AvatarState.Error, exception.Message))
+                .ConfigureAwait(false);
             throw;
+        }
+    }
+
+    private static ValueTask ReportStateAsync(
+        Func<AvatarStateEvent, CancellationToken, ValueTask>? callback,
+        AvatarStateEvent state,
+        CancellationToken cancellationToken) =>
+        callback is null ? ValueTask.CompletedTask : callback(state, cancellationToken);
+
+    private static async ValueTask ReportStateWithoutCancellationAsync(
+        Func<AvatarStateEvent, CancellationToken, ValueTask>? callback,
+        AvatarStateEvent state)
+    {
+        if (callback is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await callback(state, CancellationToken.None).ConfigureAwait(false);
+        }
+        catch
+        {
+            // The original failure or cancellation remains authoritative.
         }
     }
 }

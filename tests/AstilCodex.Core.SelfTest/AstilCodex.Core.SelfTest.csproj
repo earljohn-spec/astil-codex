@@ -7,5 +7,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\AstilCodex.Contracts\AstilCodex.Contracts.csproj" />
     <ProjectReference Include="..\..\src\AstilCodex.Core\AstilCodex.Core.csproj" />
+    <ProjectReference Include="..\..\src\AstilCodex.Core.Host\AstilCodex.Core.Host.csproj" />
+    <ProjectReference Include="..\..\src\AstilCodex.Ipc\AstilCodex.Ipc.csproj" />
+    <ProjectReference Include="..\..\src\AstilCodex.Memory\AstilCodex.Memory.csproj" />
   </ItemGroup>
 </Project>

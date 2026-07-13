@@ -24,6 +24,14 @@ Use redacted examples and `.env.example` files containing placeholder names only
 - Supported modifications must have a rollback path.
 - Secrets must be filtered before any model prompt is constructed.
 
+## Local memory
+
+Conversation memory is stored in a local SQLite database. The current pre-alpha database is not encrypted at rest and must never contain passwords, access tokens, private keys, or raw credentials. Users can clear all CLI memory with `/memory clear`; production UI controls will provide session-level deletion and retention settings.
+
+## Local IPC
+
+The current IPC host uses a versioned, length-prefixed named-pipe protocol. On Windows, the server requests current-user-only access. Frames are limited to 4 MiB, message types are allowlisted, contract versions are checked, and active chat requests can be cancelled. IPC payloads remain untrusted input and require typed deserialization and policy validation.
+
 ## Reporting a vulnerability
 
 Do not publish exploitable details in a public issue. Until a dedicated security contact is configured, use GitHub's private vulnerability reporting feature if it is enabled for the repository owner. Include the affected component, reproduction steps, impact, and any suggested mitigation.
