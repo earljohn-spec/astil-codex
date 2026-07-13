@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>AstilCodex.Core.SelfTest</RootNamespace>
+    <AssemblyName>AstilCodex.Core.SelfTest</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AstilCodex.Contracts\AstilCodex.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\AstilCodex.Core\AstilCodex.Core.csproj" />
+  </ItemGroup>
+</Project>

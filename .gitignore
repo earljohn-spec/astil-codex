@@ -56,17 +56,17 @@ yarn-error.log*
 [Mm]emoryCaptures/
 [Rr]ecordings/
 
-# Unity generated files
-*.csproj
-*.sln
-*.pidb
-*.booproj
-*.svd
-*.pdb
-*.mdb
-*.opendb
-*.VC.db
-sysinfo.txt
+# Unity-generated IDE files (scope these to the future Unity client only)
+src/AstilCodex.UnityClient/*.csproj
+src/AstilCodex.UnityClient/*.sln
+src/AstilCodex.UnityClient/*.pidb
+src/AstilCodex.UnityClient/*.booproj
+src/AstilCodex.UnityClient/*.svd
+src/AstilCodex.UnityClient/*.pdb
+src/AstilCodex.UnityClient/*.mdb
+src/AstilCodex.UnityClient/*.opendb
+src/AstilCodex.UnityClient/*.VC.db
+src/AstilCodex.UnityClient/sysinfo.txt
 
 # Blender recovery and temporary files
 *.blend1

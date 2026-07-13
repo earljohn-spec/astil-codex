@@ -38,7 +38,22 @@ astil-codex/
 └── CONTRIBUTING.md
 ```
 
-## Try the core simulator
+## Run the production core foundation
+
+Requires the .NET 8 SDK and has no third-party runtime packages yet.
+
+```powershell
+dotnet restore AstilCodex.sln
+dotnet build AstilCodex.sln --configuration Release --no-restore
+dotnet run --project tests/AstilCodex.Core.SelfTest --configuration Release --no-build
+dotnet run --project src/AstilCodex.Core.Cli
+```
+
+The CLI provides an offline, streaming mock conversation and demonstrates assistant modes, privacy routing, permission decisions, task manifests, cancellation, and avatar-state events. It cannot access files, execute commands, contact AI services, or use a microphone.
+
+See [docs/development/CORE_FOUNDATION.md](docs/development/CORE_FOUNDATION.md) for details.
+
+## Run the Python reference simulator
 
 Requires Python 3.11 or newer and has no third-party dependencies.
 
@@ -47,7 +62,7 @@ python -m unittest discover -s prototypes/core_simulator/tests -v
 python prototypes/core_simulator/demo.py
 ```
 
-The simulator validates task classification, privacy-aware local/cloud routing, and permission decisions. It is a reference harness; the production orchestrator remains planned as a .NET service.
+The Python simulator remains a cross-check for deterministic routing, permissions, and local storage rules.
 
 ## Planned production stack
 

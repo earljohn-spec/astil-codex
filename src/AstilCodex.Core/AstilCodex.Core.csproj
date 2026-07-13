@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>AstilCodex.Core</RootNamespace>
+    <AssemblyName>AstilCodex.Core</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AstilCodex.Contracts\AstilCodex.Contracts.csproj" />
+  </ItemGroup>
+</Project>

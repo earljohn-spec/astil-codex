@@ -1,0 +1,36 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AstilCodex.Contracts", "src\AstilCodex.Contracts\AstilCodex.Contracts.csproj", "{C21503FB-6724-4DE4-A3C2-C79B2015DD80}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AstilCodex.Core", "src\AstilCodex.Core\AstilCodex.Core.csproj", "{039FF75B-6B3B-4FCD-91A2-75AE9090895A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AstilCodex.Core.Cli", "src\AstilCodex.Core.Cli\AstilCodex.Core.Cli.csproj", "{0735B31E-3218-43AA-93A4-2DA821088F64}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AstilCodex.Core.SelfTest", "tests\AstilCodex.Core.SelfTest\AstilCodex.Core.SelfTest.csproj", "{3069FDC2-CD75-4EDE-8497-1B5FD8FAFA39}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C21503FB-6724-4DE4-A3C2-C79B2015DD80}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C21503FB-6724-4DE4-A3C2-C79B2015DD80}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C21503FB-6724-4DE4-A3C2-C79B2015DD80}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C21503FB-6724-4DE4-A3C2-C79B2015DD80}.Release|Any CPU.Build.0 = Release|Any CPU
+		{039FF75B-6B3B-4FCD-91A2-75AE9090895A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{039FF75B-6B3B-4FCD-91A2-75AE9090895A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{039FF75B-6B3B-4FCD-91A2-75AE9090895A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{039FF75B-6B3B-4FCD-91A2-75AE9090895A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0735B31E-3218-43AA-93A4-2DA821088F64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0735B31E-3218-43AA-93A4-2DA821088F64}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0735B31E-3218-43AA-93A4-2DA821088F64}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0735B31E-3218-43AA-93A4-2DA821088F64}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3069FDC2-CD75-4EDE-8497-1B5FD8FAFA39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3069FDC2-CD75-4EDE-8497-1B5FD8FAFA39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3069FDC2-CD75-4EDE-8497-1B5FD8FAFA39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3069FDC2-CD75-4EDE-8497-1B5FD8FAFA39}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

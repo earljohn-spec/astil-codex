@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>AstilCodex.Contracts</RootNamespace>
+    <AssemblyName>AstilCodex.Contracts</AssemblyName>
+  </PropertyGroup>
+</Project>

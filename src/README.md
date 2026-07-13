@@ -1,17 +1,16 @@
 # Production Source
 
-The production implementation will be added here after the versioned contracts and core simulator stabilize.
-
-Planned components:
+The .NET 8 production foundation is now present.
 
 ```text
 src/
-├── AstilCodex.Contracts/       Shared versioned messages
-├── AstilCodex.Core/            Task router and orchestration
-├── AstilCodex.Memory/          SQLite persistence and retention rules
-├── AstilCodex.Providers/       Local/cloud AI, STT, TTS, and vision adapters
-├── AstilCodex.Tools/           Permission-controlled tool registry
-└── AstilCodex.UnityClient/     Unity project or documented Unity subtree
+├── AstilCodex.Contracts/       Shared versioned messages and enums
+├── AstilCodex.Core/            Routing, permissions, providers, orchestration
+├── AstilCodex.Core.Cli/        Offline interactive development shell
+├── AstilCodex.Memory/          SQLite persistence (next milestone)
+├── AstilCodex.Providers/       Real AI/STT/TTS adapters (planned)
+├── AstilCodex.Tools/           Permission-controlled tools (planned)
+└── AstilCodex.UnityClient/     Unity/VRM client (planned)
 ```
 
-The production core is planned for .NET. A dependency-free Python simulator under `prototypes/core_simulator` validates rules and contracts in environments where the .NET and Unity toolchains are unavailable.
+`AstilCodex.Core.Cli` currently uses a streaming mock provider and cannot access computer resources. Run the production self-test project before starting the CLI. See `docs/development/CORE_FOUNDATION.md`.
