@@ -15,4 +15,11 @@ Astil Codex source code and original character assets do not yet have a public p
 - License status: Public domain
 - Purpose: Embedded local database engine used through Microsoft.Data.Sqlite
 
+## UniVRM
+
+- Version: 0.131.1
+- Project: https://github.com/vrm-c/UniVRM
+- License: MIT
+- Purpose: VRM 1.0/0.x runtime loading and avatar support in the Unity client
+
 This notice does not change the licensing of Astil Codex source code, character assets, voices, or other project materials.

@@ -2,7 +2,7 @@
 
 **Astil Codex** is an original live 3D AI desktop assistant for Windows. The project combines a VRM character, real-time conversation, privacy-first local/cloud AI routing, everyday assistance, permission-controlled coding tools, Blender integration, and a future AI/ML laboratory.
 
-> **Status:** Pre-alpha. The .NET core, persistent local memory, versioned IPC host, automated tests, and interactive UI concept are operational. The Unity/VRM Windows client is not yet implemented.
+> **Status:** Pre-alpha. The .NET core, persistent local memory, versioned IPC host, automated tests, interactive UI concept, and Unity/VRM client foundation are present. The Unity client still requires first-editor import and Windows build validation.
 
 ## Design principles
 
@@ -31,7 +31,7 @@ astil-codex/
 ├── prototypes/
 │   ├── core_simulator/        Testable task-routing reference prototype
 │   └── ui-prototype/          Clickable interface concept
-├── src/                       Production .NET core, memory, IPC, and future Unity source
+├── src/                       Production .NET core, memory, IPC, and Unity client
 ├── tests/                     Executable production-core integration tests
 ├── PROJECT_SPEC.md            Approved product specification
 ├── SECURITY.md
@@ -58,6 +58,18 @@ dotnet run --project src/AstilCodex.Core.Host
 ```
 
 Neither executable can access files, execute commands, contact AI services, or use a microphone. See [docs/development/CORE_FOUNDATION.md](docs/development/CORE_FOUNDATION.md) and [docs/development/LOCAL_MEMORY_AND_IPC.md](docs/development/LOCAL_MEMORY_AND_IPC.md).
+
+## Open the Unity client
+
+The desktop client is pinned to Unity `6000.3.18f1` and UniVRM `v0.131.1`.
+
+1. Build `AstilCodex.Core.Host` in Release mode.
+2. Add `src/AstilCodex.UnityClient` to Unity Hub.
+3. Open it with Unity 6.3 LTS.
+4. Run **Astil Codex > Create or Refresh Main Scene**.
+5. Enter Play Mode and select **Connect Core**.
+
+See [src/AstilCodex.UnityClient/README.md](src/AstilCodex.UnityClient/README.md) and [docs/development/UNITY_CLIENT.md](docs/development/UNITY_CLIENT.md).
 
 ## Run the Python reference simulator
 

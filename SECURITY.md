@@ -32,6 +32,10 @@ Conversation memory is stored in a local SQLite database. The current pre-alpha 
 
 The current IPC host uses a versioned, length-prefixed named-pipe protocol. On Windows, the server requests current-user-only access. Frames are limited to 4 MiB, message types are allowlisted, contract versions are checked, and active chat requests can be cancelled. IPC payloads remain untrusted input and require typed deserialization and policy validation.
 
+## Unity client and avatar imports
+
+The Unity client launches only a core-host executable resolved from the known development/build location or the explicit `ASTIL_CODEX_CORE_HOST` environment variable, with shell execution disabled. Runtime avatar loading accepts only `.vrm` files from an explicit local path and rejects files over 256 MiB. Imported models remain untrusted content and must have documented usage rights before redistribution.
+
 ## Reporting a vulnerability
 
 Do not publish exploitable details in a public issue. Until a dedicated security contact is configured, use GitHub's private vulnerability reporting feature if it is enabled for the repository owner. Include the affected component, reproduction steps, impact, and any suggested mitigation.

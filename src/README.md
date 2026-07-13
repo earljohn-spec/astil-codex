@@ -12,7 +12,7 @@ src/
 ├── AstilCodex.Memory/          SQLite conversation persistence
 ├── AstilCodex.Providers/       Real AI/STT/TTS adapters (planned)
 ├── AstilCodex.Tools/           Permission-controlled tools (planned)
-└── AstilCodex.UnityClient/     Unity/VRM client (planned)
+└── AstilCodex.UnityClient/     Unity 6.3/VRM desktop-client foundation
 ```
 
 `AstilCodex.Core.Cli` and `AstilCodex.Core.Host` currently use a streaming mock provider and cannot access computer resources. The CLI persists conversation history locally; the host exposes health, chat streaming, avatar-state, completion, error, and cancellation messages over a current-user named pipe. Run the production self-test project before starting either executable.

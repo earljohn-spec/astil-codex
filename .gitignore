@@ -80,9 +80,9 @@ src/AstilCodex.UnityClient/sysinfo.txt
 *.db-wal
 *.sqlite
 *.sqlite3
-runtime/
-logs/
-checkpoints/
+/runtime/
+/logs/
+/checkpoints/
 
 # AI model files (publish through approved artifact storage)
 *.gguf
@@ -93,6 +93,6 @@ checkpoints/
 *.pth
 
 # Packaging and generated output
-artifacts/
-packages/
-coverage/
+/artifacts/
+/packages/
+/coverage/

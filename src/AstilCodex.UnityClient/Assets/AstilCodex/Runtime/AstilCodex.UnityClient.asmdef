@@ -1,0 +1,17 @@
+{
+  "name": "AstilCodex.UnityClient",
+  "rootNamespace": "AstilCodex.UnityClient",
+  "references": [
+    "Unity.ugui",
+    "VRM10"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
