@@ -45,6 +45,7 @@ The current SQLite database is local but not encrypted at rest. It must not stor
 - Byte-stream framing: 4-byte little-endian payload length followed by JSON
 - Windows server restriction: current user only
 - Connection scope: one local UI client per host instance in this milestone
+- Cancellation-source cleanup is deferred until the client service stops, preventing cancellation/disposal races
 
 Supported messages:
 

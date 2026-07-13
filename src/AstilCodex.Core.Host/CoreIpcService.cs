@@ -20,6 +20,8 @@ public sealed class CoreIpcService(
         hardware ?? throw new ArgumentNullException(nameof(hardware));
     private readonly ConcurrentDictionary<string, CancellationTokenSource> _activeCancellation = new();
     private readonly ConcurrentDictionary<string, Task> _activeTasks = new();
+    private readonly ConcurrentBag<Task> _cleanupTasks = new();
+    private readonly ConcurrentBag<CancellationTokenSource> _retiredCancellation = new();
 
     public async Task RunClientAsync(
         IpcConnection connection,
@@ -71,6 +73,22 @@ public sealed class CoreIpcService(
                 {
                     // Individual task failures are converted into IPC error events.
                 }
+            }
+
+            var cleanup = _cleanupTasks.ToArray();
+            if (cleanup.Length > 0)
+            {
+                await Task.WhenAll(cleanup).ConfigureAwait(false);
+            }
+
+            foreach (var source in _activeCancellation.Values)
+            {
+                source.Dispose();
+            }
+
+            while (_retiredCancellation.TryTake(out var retired))
+            {
+                retired.Dispose();
             }
         }
     }
@@ -148,7 +166,7 @@ public sealed class CoreIpcService(
 
         var task = ProcessChatAsync(connection, envelope, linkedSource.Token);
         _activeTasks[requestId] = task;
-        _ = CleanupWhenCompleteAsync(requestId, task);
+        _cleanupTasks.Add(CleanupWhenCompleteAsync(requestId, task));
     }
 
     private async Task CleanupWhenCompleteAsync(string requestId, Task task)
@@ -165,7 +183,9 @@ public sealed class CoreIpcService(
         _activeTasks.TryRemove(requestId, out _);
         if (_activeCancellation.TryRemove(requestId, out var source))
         {
-            source.Dispose();
+            // Disposal is deferred until the client service stops. A cancellation
+            // request can race with this cleanup after reading the dictionary entry.
+            _retiredCancellation.Add(source);
         }
     }
 

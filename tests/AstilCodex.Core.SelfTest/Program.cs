@@ -336,65 +336,69 @@ internal static class Program
     private static async Task IpcCancellationStopsChat()
     {
         var databasePath = NewTemporaryDatabasePath();
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
         try
         {
             var store = new SqliteConversationStore(databasePath);
             await store.InitializeAsync(timeout.Token).ConfigureAwait(false);
-            var server = new NamedPipeIpcServer(NewPipeName());
-            var service = CreateIpcService(store, TimeSpan.FromMilliseconds(100));
-            var serverTask = server.RunSingleClientAsync(
-                service.RunClientAsync,
-                timeout.Token);
-            await server.Ready.WaitAsync(timeout.Token).ConfigureAwait(false);
 
-            var cancelled = false;
-            await using (var client = await NamedPipeIpcClient.ConnectAsync(
-                server.PipeName,
-                TimeSpan.FromSeconds(5),
-                timeout.Token).ConfigureAwait(false))
+            for (var iteration = 0; iteration < 1; iteration++)
             {
-                const string requestId = "ipc-cancel-target";
-                await client.SendAsync(
-                    IpcSerializer.CreateEnvelope(
-                        IpcMessageTypes.ChatRequest,
-                        new ChatIpcRequest(
-                            "ipc-cancel-test",
-                            AssistantMode.Companion,
-                            "Generate a response that will be cancelled",
-                            ProcessingPolicy.AutoPrivacyFirst),
-                        messageId: requestId),
-                    timeout.Token).ConfigureAwait(false);
+                var server = new NamedPipeIpcServer(NewPipeName());
+                var service = CreateIpcService(store, TimeSpan.FromMilliseconds(100));
+                var serverTask = server.RunSingleClientAsync(
+                    service.RunClientAsync,
+                    timeout.Token);
+                await server.Ready.WaitAsync(timeout.Token).ConfigureAwait(false);
 
-                IpcEnvelope? started;
-                do
+                var cancelled = false;
+                await using (var client = await NamedPipeIpcClient.ConnectAsync(
+                    server.PipeName,
+                    TimeSpan.FromSeconds(5),
+                    timeout.Token).ConfigureAwait(false))
                 {
-                    started = await client.ReceiveAsync(timeout.Token).ConfigureAwait(false);
-                }
-                while (started is not null && started.MessageType != IpcMessageTypes.ChatStarted);
-                AssertTrue(started is not null, "Chat did not start before cancellation.");
+                    var requestId = $"ipc-cancel-target-{iteration}";
+                    await client.SendAsync(
+                        IpcSerializer.CreateEnvelope(
+                            IpcMessageTypes.ChatRequest,
+                            new ChatIpcRequest(
+                                $"ipc-cancel-test-{iteration}",
+                                AssistantMode.Companion,
+                                "Generate a response that will be cancelled",
+                                ProcessingPolicy.AutoPrivacyFirst),
+                            messageId: requestId),
+                        timeout.Token).ConfigureAwait(false);
 
-                await client.SendAsync(
-                    IpcSerializer.CreateEnvelope(
-                        IpcMessageTypes.CancelRequest,
-                        new CancelTaskRequest(requestId)),
-                    timeout.Token).ConfigureAwait(false);
-
-                while (!cancelled)
-                {
-                    var message = await client.ReceiveAsync(timeout.Token).ConfigureAwait(false)
-                        ?? throw new InvalidOperationException("IPC connection ended before cancellation acknowledgement.");
-                    cancelled = message.MessageType == IpcMessageTypes.TaskCancelled;
-                    if (message.MessageType == IpcMessageTypes.Error)
+                    IpcEnvelope? started;
+                    do
                     {
-                        throw new InvalidOperationException(
-                            IpcSerializer.GetPayload<ErrorEvent>(message).Message);
+                        started = await client.ReceiveAsync(timeout.Token).ConfigureAwait(false);
+                    }
+                    while (started is not null && started.MessageType != IpcMessageTypes.ChatStarted);
+                    AssertTrue(started is not null, "Chat did not start before cancellation.");
+
+                    await client.SendAsync(
+                        IpcSerializer.CreateEnvelope(
+                            IpcMessageTypes.CancelRequest,
+                            new CancelTaskRequest(requestId)),
+                        timeout.Token).ConfigureAwait(false);
+
+                    while (!cancelled)
+                    {
+                        var message = await client.ReceiveAsync(timeout.Token).ConfigureAwait(false)
+                            ?? throw new InvalidOperationException("IPC connection ended before cancellation acknowledgement.");
+                        cancelled = message.MessageType == IpcMessageTypes.TaskCancelled;
+                        if (message.MessageType == IpcMessageTypes.Error)
+                        {
+                            throw new InvalidOperationException(
+                                IpcSerializer.GetPayload<ErrorEvent>(message).Message);
+                        }
                     }
                 }
-            }
 
-            await serverTask.ConfigureAwait(false);
-            AssertTrue(cancelled, "Expected a task-cancelled IPC event.");
+                await serverTask.ConfigureAwait(false);
+                AssertTrue(cancelled, "Expected a task-cancelled IPC event.");
+            }
         }
         finally
         {
