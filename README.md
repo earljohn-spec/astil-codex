@@ -1,103 +1,248 @@
 # Astil Codex
 
-**Astil Codex** is an original live 3D AI desktop assistant for Windows. The project combines a VRM character, real-time conversation, privacy-first local/cloud AI routing, everyday assistance, permission-controlled coding tools, Blender integration, and a future AI/ML laboratory.
+> An original live 3D AI desktop assistant for Windows—designed to converse, organize, code, create, and act through explicit user-approved tools.
 
-> **Status:** Pre-alpha. The .NET core, persistent local memory, versioned IPC host, automated tests, interactive UI concept, and Unity/VRM client foundation are present. The Unity client still requires first-editor import and Windows build validation.
+[![Foundation checks](https://github.com/earljohn-spec/astil-codex/actions/workflows/core-simulator.yml/badge.svg)](https://github.com/earljohn-spec/astil-codex/actions/workflows/core-simulator.yml)
+![Status](https://img.shields.io/badge/status-pre--alpha-8b5cf6)
+![Platform](https://img.shields.io/badge/platform-Windows-3b82f6)
+![Unity](https://img.shields.io/badge/Unity-6000.3.19f1-111827)
+![.NET](https://img.shields.io/badge/.NET-8.0-512bd4)
 
-## Design principles
+Astil Codex combines an original animated avatar, a local .NET agent core, persistent SQLite memory, and a Unity desktop interface. Its long-term purpose is to provide one character-driven assistant for everyday tasks, software development, Blender workflows, and eventually controlled AI/ML experiments.
 
-- **Original identity:** Original character, model, personality, and properly licensed voice.
-- **Privacy first:** Personal data remains local by default.
-- **Visible agency:** Astil Codex shows its plan, requested permissions, and current actions.
-- **Local execution:** Consequential operations run through controlled local tools.
-- **Human approval:** Sensitive, destructive, external, and paid actions always require confirmation.
-- **Provider neutrality:** Local and cloud AI providers are replaceable adapters.
-- **Reversibility:** Code and file changes use diffs, snapshots, Git, or another rollback mechanism.
+The project prioritizes privacy, visible plans, narrow permissions, reversible actions, and clear user control. It does **not** silently grant an AI unrestricted access to the computer.
 
-## Planned modes
+## Current status
 
-- **Companion:** Conversation and character interaction
-- **Assistant:** Reminders, documents, files, calendar, and everyday tasks
-- **Focus:** Concise responses and reduced distractions
-- **Developer:** Coding, Git, builds, tests, and debugging in approved workspaces
-- **Creator:** Blender-based 3D Studio and a later AI Laboratory
+Astil Codex is a working **pre-alpha foundation**. The first standalone Windows development build has been compiled and tested successfully.
 
-## Repository map
+### Working now
+
+- Standalone Windows Unity application
+- Animated procedural Astil placeholder and Codex Shards
+- Runtime loading of a properly licensed local VRM model
+- Companion, Assistant, Focus, Developer, and Creator mode controls
+- Privacy-policy selection
+- Local .NET 8 core host
+- Current-user named-pipe IPC with versioned messages
+- Streamed chat text and avatar-state events
+- Emergency task cancellation
+- Persistent SQLite conversation history
+- Build-safe custom placeholder shader
+- Automated routing, permission, memory, IPC, and cancellation tests
+- GitHub Actions foundation validation
+
+### Not connected yet
+
+- Real local or cloud language model—the application currently uses `MockChatProvider`
+- Speech recognition, text-to-speech, lip sync, or wake word
+- Final original Astil VRM character and expression mapping
+- File, Git, terminal, calendar, email, or Blender tools
+- Transparent always-on-top desktop-companion window
+- Production installer, code signing, updater, or encrypted memory
+
+The mock provider is intentionally offline and cannot access files, execute commands, use a microphone, or contact an external AI service.
+
+## Architecture
 
 ```text
-astil-codex/
-├── contracts/                 Versioned JSON contracts
-├── docs/                      Architecture and security documentation
-├── prototypes/
-│   ├── core_simulator/        Testable task-routing reference prototype
-│   └── ui-prototype/          Clickable interface concept
-├── src/                       Production .NET core, memory, IPC, and Unity client
-├── tests/                     Executable production-core integration tests
-├── PROJECT_SPEC.md            Approved product specification
-├── SECURITY.md
-└── CONTRIBUTING.md
+┌─────────────────────────────────────────────────────────┐
+│ Unity 6.3 Windows Client                                │
+│ Avatar · Chat · Modes · Privacy · Approvals · Stop      │
+└──────────────────────────┬──────────────────────────────┘
+                           │ named pipe: astil-codex-core-v1
+┌──────────────────────────▼──────────────────────────────┐
+│ .NET 8 Core Host                                        │
+│ Conversation · Routing · Permissions · Cancellation     │
+├──────────────────────┬───────────────────┬──────────────┤
+│ Provider adapters    │ SQLite memory     │ Tool registry │
+│ Mock currently       │ Local persistence │ Planned       │
+└──────────────────────┴───────────────────┴──────────────┘
 ```
 
-## Run the production core
+Reasoning and execution are separated. Model output is treated as untrusted input until deterministic policy and permission checks approve an operation.
 
-Requires the .NET 8 SDK.
+## Assistant modes
+
+| Mode | Intended behavior |
+|---|---|
+| Companion | Conversation, check-ins, and expressive character interaction |
+| Assistant | Planning, reminders, documents, and everyday organization |
+| Focus | Concise responses and reduced interruptions |
+| Developer | Code analysis, diffs, builds, tests, and approved workspace tools |
+| Creator | Blender-based 3D workflows and future AI/ML projects |
+
+The interface exposes all five modes now; their advanced tool capabilities remain roadmap work.
+
+## Requirements
+
+### Core development
+
+- Windows 10/11
+- Git
+- .NET 8 SDK
+- Python 3.11 or newer for reference validators
+
+### Unity client
+
+- Unity Hub
+- Unity `6000.3.19f1`
+- Windows Build Support; IL2CPP is recommended for future release builds
+- Git access for Unity Package Manager
+- UniVRM `v0.131.1` is pinned in `Packages/manifest.json`
+- Visual Studio Community with **Game development with Unity** is recommended, not required to run the Editor
+
+## Quick start: .NET foundation
 
 ```powershell
+git clone https://github.com/earljohn-spec/astil-codex.git
+cd astil-codex
+
 dotnet restore AstilCodex.sln
 dotnet build AstilCodex.sln --configuration Release --no-restore
 dotnet run --project tests/AstilCodex.Core.SelfTest --configuration Release --no-build
-dotnet run --project src/AstilCodex.Core.Cli
+dotnet run --project src/AstilCodex.Core.Cli --configuration Release --no-build
 ```
 
-The CLI provides offline streaming conversation through a mock provider. It demonstrates modes, privacy routing, permission decisions, persistent local history, cancellation, and avatar-state events. Use `/history` to inspect its session and `/memory clear` to remove local conversation data.
+Useful CLI commands:
 
-Run the named-pipe host for a future Unity client:
+```text
+/mode companion|assistant|focus|developer|creator
+/policy auto|local|cloud|ask
+/history
+/memory clear
+/quit
+```
+
+## Quick start: Unity client
+
+Build the core host first:
 
 ```powershell
-dotnet run --project src/AstilCodex.Core.Host
+dotnet build src/AstilCodex.Core.Host/AstilCodex.Core.Host.csproj --configuration Release
 ```
 
-Neither executable can access files, execute commands, contact AI services, or use a microphone. See [docs/development/CORE_FOUNDATION.md](docs/development/CORE_FOUNDATION.md) and [docs/development/LOCAL_MEMORY_AND_IPC.md](docs/development/LOCAL_MEMORY_AND_IPC.md).
+Then:
 
-## Open the Unity client
+1. Add `src/AstilCodex.UnityClient` to Unity Hub.
+2. Open it with Unity `6000.3.19f1`.
+3. Open `Assets/AstilCodex/Scenes/Main.unity`.
+4. Enter Play Mode.
+5. Select **Connect Core**.
+6. Send a message to verify streamed mock chat.
 
-The desktop client is pinned to Unity `6000.3.19f1` and UniVRM `v0.131.1`.
+If the main scene is missing, use **Astil Codex → Create or Refresh Main Scene**.
 
-1. Build `AstilCodex.Core.Host` in Release mode.
-2. Add `src/AstilCodex.UnityClient` to Unity Hub.
-3. Open it with Unity 6.3 LTS.
-4. Run **Astil Codex > Create or Refresh Main Scene**.
-5. Enter Play Mode and select **Connect Core**.
+## Build the Windows application
 
-See [src/AstilCodex.UnityClient/README.md](src/AstilCodex.UnityClient/README.md) and [docs/development/UNITY_CLIENT.md](docs/development/UNITY_CLIENT.md).
+In Unity, stop Play Mode and select:
 
-## Run the Python reference simulator
-
-Requires Python 3.11 or newer and has no third-party dependencies.
-
-```bash
-python -m unittest discover -s prototypes/core_simulator/tests -v
-python prototypes/core_simulator/demo.py
+```text
+Astil Codex → Build Windows Development Client
 ```
 
-The Python simulator remains a cross-check for deterministic routing, permissions, and local storage rules.
+The generated application is written to:
 
-## Planned production stack
+```text
+src/AstilCodex.UnityClient/Builds/Windows/
+├── AstilCodex.exe
+├── AstilCodex_Data/
+└── Core/
+```
 
-- Unity/C# desktop and VRM avatar client
-- .NET AI core service
-- SQLite local data store
-- Windows Credential Manager or DPAPI-backed secret storage
-- Local and cloud AI provider adapters
-- Controlled Blender add-on and Python worker
-- Isolated AI/ML project environments
+The build helper copies the Release .NET core host and SQLite dependencies into `Core`. Generated builds are intentionally excluded from Git.
 
-See [PROJECT_SPEC.md](PROJECT_SPEC.md) for the roadmap and acceptance criteria. Runtime dependencies and their licenses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+## VRM avatar testing
 
-## Security
+No third-party character model is bundled. Place a VRM model you have the right to use at:
 
-Never commit API keys, passwords, private keys, tokens, private user data, or production credentials. See [SECURITY.md](SECURITY.md).
+```text
+%LOCALAPPDATA%\AstilCodex\avatars\astil.vrm
+```
+
+Then select **Load default VRM** in the application. Imported `.vrm` files are limited to 256 MiB and remain outside the repository by default.
+
+## Local data
+
+Conversation memory is stored at:
+
+```text
+%LOCALAPPDATA%\AstilCodex\data\astil-codex.db
+```
+
+The current database is local but not encrypted at rest. Never store passwords, access tokens, private keys, or raw credentials in conversation memory.
+
+## Reclaim development disk space
+
+The tracked repository is intentionally small—approximately 1–2 MiB without generated caches. Most local space is consumed by Unity `Library`, Windows builds, and .NET `bin`/`obj` directories.
+
+Preview safe cleanup candidates:
+
+```powershell
+.\scripts\clean-development.ps1
+```
+
+Delete standard generated outputs:
+
+```powershell
+.\scripts\clean-development.ps1 -Apply
+```
+
+Include Unity `Library` for maximum recovery:
+
+```powershell
+.\scripts\clean-development.ps1 -Deep -Apply
+```
+
+Close Unity, Astil Codex, and the core host before applying cleanup. `-Deep` forces a full Unity package and asset reimport on the next launch. The script never touches source, Git history, `ProjectSettings`, `Packages`, local conversation memory, or avatars.
+
+See [Development storage and cleanup](docs/development/STORAGE_AND_CLEANUP.md).
+
+## Repository layout
+
+```text
+astil-codex/
+├── contracts/                         JSON contract schemas and examples
+├── docs/                              Architecture and development guides
+├── prototypes/
+│   ├── core_simulator/                Dependency-free Python policy reference
+│   └── ui-prototype/                  Offline clickable interface concept
+├── scripts/                           Development maintenance tools
+├── src/
+│   ├── AstilCodex.Contracts/          Shared .NET contracts
+│   ├── AstilCodex.Core/               Routing, permissions, and orchestration
+│   ├── AstilCodex.Core.Cli/           Offline development shell
+│   ├── AstilCodex.Core.Host/          IPC host process
+│   ├── AstilCodex.Ipc/                Named-pipe protocol and transport
+│   ├── AstilCodex.Memory/             SQLite persistence
+│   └── AstilCodex.UnityClient/        Unity/VRM Windows application
+├── tests/AstilCodex.Core.SelfTest/    Executable production-core tests
+├── PROJECT_SPEC.md                    Approved product specification
+├── SECURITY.md                        Security boundaries and reporting
+└── THIRD_PARTY_NOTICES.md             Dependency and license notices
+```
+
+## Roadmap
+
+1. Real provider adapters and secure provider settings
+2. Local-model and OpenAI-compatible streaming support
+3. Original Astil character bible and final VRM production
+4. Speech recognition, licensed TTS, lip sync, and interruption
+5. Low-risk everyday tools and approval UI
+6. Developer workspace, Git, build, and test tools
+7. Blender 3D Studio connector
+8. AI Laboratory with isolated environments
+9. Transparent companion window, installer, signing, and updates
+
+Detailed plans are in [PROJECT_SPEC.md](PROJECT_SPEC.md) and the [development documentation](docs/development/).
+
+## Security and contribution
+
+- Never commit API keys, passwords, tokens, private data, or unlicensed assets.
+- Imported avatars and voices require clear usage and redistribution rights.
+- Sensitive, external, destructive, and paid actions require explicit approval.
+- See [SECURITY.md](SECURITY.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Licensing
 
-No open-source license has been selected yet. Unless a license is added, no permission is granted to copy, redistribute, or modify the source or original character assets. Code and character/voice assets will be licensed separately if the project is opened to contributors or public distribution.
+No open-source license has been selected yet. Unless a license is added, no permission is granted to copy, redistribute, or modify Astil Codex source code or original character assets. Code, model, voice, music, and third-party dependencies are evaluated separately. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

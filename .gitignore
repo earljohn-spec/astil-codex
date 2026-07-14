@@ -13,9 +13,12 @@ appsettings.Local.json
 .DS_Store
 Thumbs.db
 Desktop.ini
+*.dmp
+*.stacktrace
 
 # Editors and IDEs
 .idea/
+.vs/
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.example.json

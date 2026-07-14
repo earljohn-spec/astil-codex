@@ -25,6 +25,9 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Validate repository hygiene
+        run: python scripts/validate_repository.py
+
       - name: Validate JSON contracts
         run: |
           python -m json.tool contracts/task-manifest.schema.json > /dev/null
