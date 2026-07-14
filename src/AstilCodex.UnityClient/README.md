@@ -5,7 +5,7 @@ Unity/VRM desktop-client foundation for Astil Codex.
 ## Required software
 
 - Unity Hub
-- Unity `6000.3.18f1` (Unity 6.3 LTS) with Windows Build Support (IL2CPP is optional for this milestone)
+- Unity `6000.3.19f1` (Unity 6.3 LTS) with Windows Build Support (IL2CPP is optional for this milestone)
 - Git, used by Unity Package Manager to retrieve UniVRM
 - .NET 8 SDK, used to build the local core host
 
@@ -21,7 +21,7 @@ In Unity Hub:
 
 1. Select **Add > Add project from disk**.
 2. Choose `src/AstilCodex.UnityClient`.
-3. Open it with Unity `6000.3.18f1` or a newer Unity 6.3 LTS patch.
+3. Open it with Unity `6000.3.19f1` or a newer Unity 6.3 LTS patch.
 4. Wait for Package Manager and script compilation to finish.
 5. Select **Astil Codex > Create or Refresh Main Scene**.
 6. Enter Play Mode.

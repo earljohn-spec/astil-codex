@@ -71,7 +71,7 @@ namespace AstilCodex.UnityClient.UI
         private static void CreateTopBar(Transform parent, AstilUiReferences ui)
         {
             var bar = CreatePanel(parent, "Top Bar", Panel);
-            SetRect(bar.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), Vector2.zero, new Vector2(0f, 54f));
+            SetRect(bar.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -54f), Vector2.zero);
 
             var brand = CreateText(bar.transform, "ASTIL CODEX", 18, FontStyle.Bold, TextAnchor.MiddleLeft, Ink);
             SetRect(brand.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(24f, 0f), new Vector2(260f, 0f));

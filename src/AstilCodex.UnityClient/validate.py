@@ -28,8 +28,8 @@ def main() -> None:
         raise SystemExit("Missing Unity client files: " + ", ".join(missing))
 
     version = (ROOT / "ProjectSettings/ProjectVersion.txt").read_text(encoding="utf-8")
-    if "6000.3.18f1" not in version:
-        raise SystemExit("Unity project is not pinned to the approved 6000.3.18f1 baseline")
+    if "6000.3.19f1" not in version:
+        raise SystemExit("Unity project is not pinned to the approved 6000.3.19f1 baseline")
 
     manifest = json.loads((ROOT / "Packages/manifest.json").read_text(encoding="utf-8"))
     dependencies = manifest.get("dependencies", {})

@@ -2,7 +2,7 @@
 
 ## Version baseline
 
-- Unity: `6000.3.18f1` from the Unity 6.3 LTS line
+- Unity: `6000.3.19f1` from the Unity 6.3 LTS line
 - UniVRM: `v0.131.1`
 - Target: Windows x64
 - UI: runtime-generated uGUI

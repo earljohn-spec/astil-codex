@@ -61,7 +61,7 @@ Neither executable can access files, execute commands, contact AI services, or u
 
 ## Open the Unity client
 
-The desktop client is pinned to Unity `6000.3.18f1` and UniVRM `v0.131.1`.
+The desktop client is pinned to Unity `6000.3.19f1` and UniVRM `v0.131.1`.
 
 1. Build `AstilCodex.Core.Host` in Release mode.
 2. Add `src/AstilCodex.UnityClient` to Unity Hub.

@@ -3,7 +3,9 @@
   "rootNamespace": "AstilCodex.UnityClient",
   "references": [
     "Unity.ugui",
-    "VRM10"
+    "VRM10",
+    "UniGLTF",
+    "UniGLTF.Utils"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
