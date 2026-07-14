@@ -72,5 +72,6 @@ Generated builds are excluded from Git.
 - Loaded VRM expressions are not yet mapped to avatar-state events.
 - The window is not transparent or always-on-top yet.
 - Speech recognition, text-to-speech, and lip sync are not connected.
-- The core still uses an offline mock chat provider.
+- The core falls back to the offline mock provider until a compatible local/cloud profile is configured with `AstilCodex.ProviderSetup.Cli`.
+- Provider configuration currently has no Unity settings panel; restart the core host after changing profiles.
 - Rapid repeated task cancellation on one long-lived IPC connection needs a dedicated soak-test milestone.

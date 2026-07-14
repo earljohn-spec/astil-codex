@@ -74,7 +74,7 @@ Also removes Unity `Library` and `UserSettings`. The next Editor launch will tak
 
 - Close Unity, `AstilCodex.exe`, and `astil-core-host.exe` before applying cleanup.
 - The script refuses paths outside the repository.
-- Source, Git history, `Assets`, `Packages`, `ProjectSettings`, memory, and avatars are excluded.
+- Source, Git history, `Assets`, `Packages`, `ProjectSettings`, memory, avatars, provider settings, and DPAPI credentials are excluded.
 - Do not manually delete files under `.git`.
 - Do not commit generated `Builds`, `Library`, `bin`, or `obj` folders.
 

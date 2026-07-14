@@ -265,7 +265,8 @@ public sealed class CoreIpcService(
                         requestId,
                         result.Text,
                         result.Manifest,
-                        result.Duration.TotalMilliseconds),
+                        result.Duration.TotalMilliseconds,
+                        result.ProviderId),
                     requestId),
                 cancellationToken).ConfigureAwait(false);
         }

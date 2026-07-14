@@ -54,13 +54,19 @@
         "resolved": "4.5.3",
         "contentHash": "3oDzvc/zzetpTKWMShs1AADwZjQ/36HnsufHRPcOjyRAAMLDlu2iD33MBI2opxnezcVUtXyqDXXjoFMOU9c7SA=="
       },
+      "System.Security.Cryptography.ProtectedData": {
+        "type": "Transitive",
+        "resolved": "8.0.0",
+        "contentHash": "+TUFINV2q2ifyXauQXRwy4CiBhqvDEDZeVJU7qfxya4aRYOKzVBpN+4acx25VcPB9ywUN6C0n8drWl110PhZEg=="
+      },
       "astil-core-host": {
         "type": "Project",
         "dependencies": {
           "AstilCodex.Contracts": "[1.0.0, )",
           "AstilCodex.Core": "[1.0.0, )",
           "AstilCodex.Ipc": "[1.0.0, )",
-          "AstilCodex.Memory": "[1.0.0, )"
+          "AstilCodex.Memory": "[1.0.0, )",
+          "AstilCodex.Providers": "[1.0.0, )"
         }
       },
       "astilcodex.contracts": {
@@ -83,6 +89,14 @@
         "dependencies": {
           "AstilCodex.Contracts": "[1.0.0, )",
           "Microsoft.Data.Sqlite": "[8.0.28, )"
+        }
+      },
+      "astilcodex.providers": {
+        "type": "Project",
+        "dependencies": {
+          "AstilCodex.Contracts": "[1.0.0, )",
+          "AstilCodex.Core": "[1.0.0, )",
+          "System.Security.Cryptography.ProtectedData": "[8.0.0, )"
         }
       }
     }

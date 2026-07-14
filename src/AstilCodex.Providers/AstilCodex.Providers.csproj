@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>AstilCodex.Providers</RootNamespace>
+    <AssemblyName>AstilCodex.Providers</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AstilCodex.Contracts\AstilCodex.Contracts.csproj" />
+    <ProjectReference Include="..\AstilCodex.Core\AstilCodex.Core.csproj" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+</Project>

@@ -110,6 +110,7 @@ namespace AstilCodex.UnityClient.Ipc
         public string requestId = string.Empty;
         public string text = string.Empty;
         public float durationMilliseconds;
+        public string providerId = string.Empty;
     }
 
     [Serializable]

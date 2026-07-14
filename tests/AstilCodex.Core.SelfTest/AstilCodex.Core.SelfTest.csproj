@@ -10,5 +10,6 @@
     <ProjectReference Include="..\..\src\AstilCodex.Core.Host\AstilCodex.Core.Host.csproj" />
     <ProjectReference Include="..\..\src\AstilCodex.Ipc\AstilCodex.Ipc.csproj" />
     <ProjectReference Include="..\..\src\AstilCodex.Memory\AstilCodex.Memory.csproj" />
+    <ProjectReference Include="..\..\src\AstilCodex.Providers\AstilCodex.Providers.csproj" />
   </ItemGroup>
 </Project>

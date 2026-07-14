@@ -14,4 +14,5 @@ public sealed record ChatRequest(
 public sealed record ChatResult(
     string Text,
     TaskManifest Manifest,
-    TimeSpan Duration);
+    TimeSpan Duration,
+    string ProviderId);

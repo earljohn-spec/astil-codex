@@ -46,7 +46,8 @@ public sealed record ChatCompletedEvent(
     string RequestId,
     string Text,
     TaskManifest Manifest,
-    double DurationMilliseconds);
+    double DurationMilliseconds,
+    string ProviderId);
 
 public sealed record CancelTaskRequest(string RequestId);
 

@@ -25,7 +25,7 @@ namespace AstilCodex.UnityClient.Ipc
         public event Action<string> HealthChanged;
         public event Action<string> ChatStarted;
         public event Action<string, string> ChatChunkReceived;
-        public event Action<string, string, float> ChatCompleted;
+        public event Action<string, string, float, string> ChatCompleted;
         public event Action<string, string> AvatarStateReceived;
         public event Action<string> TaskCancelled;
         public event Action<string, string> ErrorReceived;
@@ -392,7 +392,8 @@ namespace AstilCodex.UnityClient.Ipc
                         ChatCompleted?.Invoke(
                             envelope.payload.requestId,
                             envelope.payload.text,
-                            envelope.payload.durationMilliseconds);
+                            envelope.payload.durationMilliseconds,
+                            envelope.payload.providerId);
                     });
                     break;
                 }

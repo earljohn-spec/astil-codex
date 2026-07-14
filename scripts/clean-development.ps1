@@ -142,4 +142,4 @@ foreach ($item in $items) {
 
 Write-Host ''
 Write-Host "Cleanup complete. Planned recovery was $(Format-ByteSize $total)." -ForegroundColor Green
-Write-Host 'Source files, Git history, ProjectSettings, Packages, local conversation memory, and avatars were not touched.'
+Write-Host 'Source, Git history, Unity settings, memory, avatars, provider settings, and DPAPI secrets were not touched.'

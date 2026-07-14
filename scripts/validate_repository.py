@@ -73,7 +73,7 @@ def main() -> None:
         )
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    for marker in ("6000.3.19f1", ".NET 8", "MockChatProvider", "clean-development.ps1"):
+    for marker in ("6000.3.19f1", ".NET 8", "OpenAI-compatible", "clean-development.ps1"):
         if marker not in readme:
             raise SystemExit(f"README is missing current project marker: {marker}")
 

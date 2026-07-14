@@ -22,4 +22,11 @@ Astil Codex source code and original character assets do not yet have a public p
 - License: MIT
 - Purpose: VRM 1.0/0.x runtime loading and avatar support in the Unity client
 
+## System.Security.Cryptography.ProtectedData
+
+- Version: 8.0.0
+- Project: https://github.com/dotnet/runtime
+- License: MIT
+- Purpose: Windows current-user DPAPI encryption for provider credentials
+
 This notice does not change the licensing of Astil Codex source code, character assets, voices, or other project materials.

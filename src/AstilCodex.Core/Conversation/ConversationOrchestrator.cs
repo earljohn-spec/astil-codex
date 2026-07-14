@@ -6,17 +6,30 @@ using AstilCodex.Core.Routing;
 
 namespace AstilCodex.Core.Conversation;
 
-public sealed class ConversationOrchestrator(
-    IChatProvider chatProvider,
-    ITaskRouter taskRouter,
-    TaskClassifier classifier)
+public sealed class ConversationOrchestrator
 {
-    private readonly IChatProvider _chatProvider =
-        chatProvider ?? throw new ArgumentNullException(nameof(chatProvider));
-    private readonly ITaskRouter _taskRouter =
-        taskRouter ?? throw new ArgumentNullException(nameof(taskRouter));
-    private readonly TaskClassifier _classifier =
-        classifier ?? throw new ArgumentNullException(nameof(classifier));
+    private readonly IChatProviderResolver _providerResolver;
+    private readonly ITaskRouter _taskRouter;
+    private readonly TaskClassifier _classifier;
+
+    public ConversationOrchestrator(
+        IChatProvider chatProvider,
+        ITaskRouter taskRouter,
+        TaskClassifier classifier)
+        : this(new FixedChatProviderResolver(chatProvider), taskRouter, classifier)
+    {
+    }
+
+    public ConversationOrchestrator(
+        IChatProviderResolver providerResolver,
+        ITaskRouter taskRouter,
+        TaskClassifier classifier)
+    {
+        _providerResolver = providerResolver
+            ?? throw new ArgumentNullException(nameof(providerResolver));
+        _taskRouter = taskRouter ?? throw new ArgumentNullException(nameof(taskRouter));
+        _classifier = classifier ?? throw new ArgumentNullException(nameof(classifier));
+    }
 
     public async Task<ChatResult> ReplyAsync(
         ChatRequest request,
@@ -37,7 +50,7 @@ public sealed class ConversationOrchestrator(
                 stateChanged,
                 AvatarStateEvent.Now(AvatarState.Error, manifest.Explanation),
                 cancellationToken).ConfigureAwait(false);
-            return new ChatResult(manifest.Explanation, manifest, stopwatch.Elapsed);
+            return new ChatResult(manifest.Explanation, manifest, stopwatch.Elapsed, "none");
         }
 
         if (manifest.ReasoningLocation == ReasoningLocation.Ask)
@@ -48,22 +61,26 @@ public sealed class ConversationOrchestrator(
                 stateChanged,
                 AvatarStateEvent.Now(AvatarState.Ready, approvalMessage),
                 cancellationToken).ConfigureAwait(false);
-            return new ChatResult(approvalMessage, manifest, stopwatch.Elapsed);
+            return new ChatResult(approvalMessage, manifest, stopwatch.Elapsed, "none");
         }
 
-        await ReportStateAsync(
-            stateChanged,
-            AvatarStateEvent.Now(AvatarState.Thinking, "Preparing response"),
-            cancellationToken).ConfigureAwait(false);
         var buffer = new StringBuilder();
-
         try
         {
+            var provider = await _providerResolver.ResolveAsync(
+                manifest.ReasoningLocation,
+                cancellationToken).ConfigureAwait(false);
+
+            await ReportStateAsync(
+                stateChanged,
+                AvatarStateEvent.Now(AvatarState.Thinking, $"Preparing response with {provider.ProviderId}"),
+                cancellationToken).ConfigureAwait(false);
             await ReportStateAsync(
                 stateChanged,
                 AvatarStateEvent.Now(AvatarState.Speaking, "Streaming response"),
                 cancellationToken).ConfigureAwait(false);
-            await foreach (var chunk in _chatProvider.StreamReplyAsync(request, cancellationToken))
+
+            await foreach (var chunk in provider.StreamReplyAsync(request, cancellationToken))
             {
                 buffer.Append(chunk);
                 if (chunkReceived is not null)
@@ -76,7 +93,11 @@ public sealed class ConversationOrchestrator(
                 stateChanged,
                 AvatarStateEvent.Now(AvatarState.Ready, "Response complete"),
                 cancellationToken).ConfigureAwait(false);
-            return new ChatResult(buffer.ToString(), manifest, stopwatch.Elapsed);
+            return new ChatResult(
+                buffer.ToString(),
+                manifest,
+                stopwatch.Elapsed,
+                provider.ProviderId);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

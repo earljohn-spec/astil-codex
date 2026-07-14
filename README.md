@@ -29,19 +29,23 @@ Astil Codex is a working **pre-alpha foundation**. The first standalone Windows 
 - Emergency task cancellation
 - Persistent SQLite conversation history
 - Build-safe custom placeholder shader
-- Automated routing, permission, memory, IPC, and cancellation tests
+- OpenAI-compatible local/cloud streaming provider adapter
+- Windows DPAPI credential storage and provider setup utility
+- Provider health/model checks and mock fallback
+- Automated routing, permission, memory, IPC, provider, and cancellation tests
 - GitHub Actions foundation validation
 
 ### Not connected yet
 
-- Real local or cloud language model—the application currently uses `MockChatProvider`
+- A configured real model by default—provider adapters exist, but a user profile and compatible service/model are still required
+- In-application provider settings UI—the current setup utility is a local console application
 - Speech recognition, text-to-speech, lip sync, or wake word
 - Final original Astil VRM character and expression mapping
 - File, Git, terminal, calendar, email, or Blender tools
 - Transparent always-on-top desktop-companion window
 - Production installer, code signing, updater, or encrypted memory
 
-The mock provider is intentionally offline and cannot access files, execute commands, use a microphone, or contact an external AI service.
+Without an eligible configured profile, Astil Codex falls back to the offline mock provider. Configured providers receive only policy-approved conversation context; neither mock nor real providers receive direct tool authority.
 
 ## Architecture
 
@@ -56,7 +60,7 @@ The mock provider is intentionally offline and cannot access files, execute comm
 │ Conversation · Routing · Permissions · Cancellation     │
 ├──────────────────────┬───────────────────┬──────────────┤
 │ Provider adapters    │ SQLite memory     │ Tool registry │
-│ Mock currently       │ Local persistence │ Planned       │
+│ Mock + compatible AI │ Local persistence │ Planned       │
 └──────────────────────┴───────────────────┴──────────────┘
 ```
 
@@ -113,6 +117,20 @@ Useful CLI commands:
 /memory clear
 /quit
 ```
+
+## Configure a real AI provider
+
+Astil Codex supports OpenAI-compatible local and cloud endpoints. On Windows, run:
+
+```powershell
+dotnet run --project src/AstilCodex.ProviderSetup.Cli --configuration Release
+```
+
+The utility stores non-secret settings under `%LOCALAPPDATA%\AstilCodex\config` and encrypts API keys separately with current-user Windows DPAPI. Remote endpoints must use HTTPS; plain HTTP is allowed only for loopback local-model servers. Restart the core host after changing profiles.
+
+No API key is required to build, test, or run Astil Codex in mock mode. Never paste credentials into source files, GitHub, logs, or chat messages.
+
+See [Real AI provider foundation](docs/development/PROVIDER_INTEGRATION.md).
 
 ## Quick start: Unity client
 
@@ -215,6 +233,8 @@ astil-codex/
 │   ├── AstilCodex.Core.Host/          IPC host process
 │   ├── AstilCodex.Ipc/                Named-pipe protocol and transport
 │   ├── AstilCodex.Memory/             SQLite persistence
+│   ├── AstilCodex.Providers/          Compatible AI providers and DPAPI secrets
+│   ├── AstilCodex.ProviderSetup.Cli/  Local provider configuration utility
 │   └── AstilCodex.UnityClient/        Unity/VRM Windows application
 ├── tests/AstilCodex.Core.SelfTest/    Executable production-core tests
 ├── PROJECT_SPEC.md                    Approved product specification
@@ -224,8 +244,8 @@ astil-codex/
 
 ## Roadmap
 
-1. Real provider adapters and secure provider settings
-2. Local-model and OpenAI-compatible streaming support
+1. Unity provider-settings panel, test connection, and profile reload
+2. Provider usage limits, context preview, and cost/telemetry controls
 3. Original Astil character bible and final VRM production
 4. Speech recognition, licensed TTS, lip sync, and interruption
 5. Low-risk everyday tools and approval UI

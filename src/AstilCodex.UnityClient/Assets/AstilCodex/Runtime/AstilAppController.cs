@@ -235,7 +235,11 @@ namespace AstilCodex.UnityClient
             AppendRaw(chunk);
         }
 
-        private void OnChatCompleted(string requestId, string finalText, float durationMilliseconds)
+        private void OnChatCompleted(
+            string requestId,
+            string finalText,
+            float durationMilliseconds,
+            string providerId)
         {
             if (!_receivedChunk && !string.IsNullOrWhiteSpace(finalText))
             {
@@ -244,7 +248,10 @@ namespace AstilCodex.UnityClient
 
             AppendRaw("\n");
             _sending = false;
-            SetCoreStatus("Completed in " + Mathf.RoundToInt(durationMilliseconds) + " ms");
+            var providerLabel = string.IsNullOrWhiteSpace(providerId) ? "unknown" : providerId;
+            SetCoreStatus(
+                "Provider: " + providerLabel +
+                " · completed in " + Mathf.RoundToInt(durationMilliseconds) + " ms");
         }
 
         private void OnAvatarState(string state, string detail)
