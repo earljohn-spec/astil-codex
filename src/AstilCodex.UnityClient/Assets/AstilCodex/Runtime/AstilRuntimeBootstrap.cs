@@ -72,9 +72,21 @@ namespace AstilCodex.UnityClient
                 }
 
                 var renderer = platform.GetComponent<Renderer>();
-                var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-                var material = new Material(shader) { color = new Color(0.08f, 0.12f, 0.2f) };
-                renderer.material = material;
+                var shader = Resources.Load<Shader>("AstilPlaceholder");
+                if (shader != null)
+                {
+                    var material = new Material(shader);
+                    if (material.HasProperty("_BaseColor"))
+                    {
+                        material.SetColor("_BaseColor", new Color(0.08f, 0.12f, 0.2f));
+                    }
+
+                    renderer.material = material;
+                }
+                else
+                {
+                    Debug.LogError("AstilPlaceholder shader resource is missing.");
+                }
             }
         }
 

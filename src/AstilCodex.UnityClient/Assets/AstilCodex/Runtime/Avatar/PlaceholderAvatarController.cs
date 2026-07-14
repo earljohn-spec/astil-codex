@@ -100,10 +100,14 @@ namespace AstilCodex.UnityClient.Avatar
             _visualRoot = new GameObject("Synthetic Avatar Placeholder").transform;
             _visualRoot.SetParent(transform, false);
 
-            var shader = Shader.Find("Universal Render Pipeline/Lit");
+            var shader = Resources.Load<Shader>("AstilPlaceholder");
             if (shader == null)
             {
-                shader = Shader.Find("Standard");
+                Debug.LogError(
+                    "AstilPlaceholder shader was not included in the player. " +
+                    "Verify Assets/AstilCodex/Resources/AstilPlaceholder.shader.");
+                enabled = false;
+                return;
             }
 
             _material = new Material(shader) { name = "Astil Placeholder Material" };

@@ -17,6 +17,7 @@ REQUIRED_FILES = {
     "Assets/AstilCodex/Runtime/Avatar/PlaceholderAvatarController.cs",
     "Assets/AstilCodex/Runtime/Avatar/VrmAvatarLoader.cs",
     "Assets/AstilCodex/Runtime/UI/AstilUiFactory.cs",
+    "Assets/AstilCodex/Resources/AstilPlaceholder.shader",
     "Assets/AstilCodex/Editor/AstilProjectSetup.cs",
     "Assets/AstilCodex/Editor/AstilWindowsBuild.cs",
 }
@@ -62,6 +63,12 @@ def main() -> None:
     for value in ("1.0", "astil-codex-core-v1", "4 * 1024 * 1024"):
         if value not in ipc_source:
             raise SystemExit(f"Unity IPC protocol is missing required value: {value}")
+
+    shader = (ROOT / "Assets/AstilCodex/Resources/AstilPlaceholder.shader").read_text(
+        encoding="utf-8"
+    )
+    if 'Shader "AstilCodex/Placeholder"' not in shader or "_BaseColor" not in shader:
+        raise SystemExit("Placeholder shader does not expose the required Astil shader and color")
 
     sources = list((ROOT / "Assets/AstilCodex").rglob("*.cs"))
     print(
