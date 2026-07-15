@@ -47,6 +47,25 @@ public static class ProviderProfileValidator
             throw new ArgumentException("Cloud providers require HTTPS.", nameof(profile));
         }
 
+        if (profile.Protocol == ProviderProtocol.AnthropicMessages)
+        {
+            if (profile.Location != ProviderLocation.Cloud || endpoint.Scheme != "https")
+            {
+                throw new ArgumentException(
+                    "Native Anthropic Messages profiles must be cloud profiles using HTTPS.",
+                    nameof(profile));
+            }
+
+            if (!endpoint.AbsolutePath.TrimEnd('/').EndsWith(
+                "/v1/messages",
+                StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException(
+                    "Native Anthropic endpoint must end with /v1/messages.",
+                    nameof(profile));
+            }
+        }
+
         if (profile.MaxOutputTokens is < 1 or > 32768)
         {
             throw new ArgumentOutOfRangeException(
@@ -68,10 +87,13 @@ public static class ProviderProfileValidator
     {
         ArgumentNullException.ThrowIfNull(chatCompletionsEndpoint);
         var path = chatCompletionsEndpoint.AbsolutePath.TrimEnd('/');
-        const string suffix = "/chat/completions";
-        path = path.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)
-            ? path[..^suffix.Length] + "/models"
-            : path + "/models";
+        const string chatSuffix = "/chat/completions";
+        const string messagesSuffix = "/messages";
+        path = path.EndsWith(chatSuffix, StringComparison.OrdinalIgnoreCase)
+            ? path[..^chatSuffix.Length] + "/models"
+            : path.EndsWith(messagesSuffix, StringComparison.OrdinalIgnoreCase)
+                ? path[..^messagesSuffix.Length] + "/models"
+                : path + "/models";
         var builder = new UriBuilder(chatCompletionsEndpoint)
         {
             Path = path,

@@ -1,6 +1,6 @@
 # Real AI Provider Foundation
 
-Astil Codex supports OpenAI-compatible streaming endpoints without binding the core to one vendor. The provider layer works with HTTPS cloud services and loopback local-model servers that implement compatible `/chat/completions` and `/models` APIs.
+Astil Codex supports OpenAI-compatible streaming endpoints and the native Anthropic Claude Messages API without binding the core to one vendor. OpenAI-compatible profiles can target HTTPS cloud services or loopback local-model servers. Native Anthropic profiles use `https://api.anthropic.com/v1/messages` and Anthropic-specific SSE events.
 
 ## Components
 
@@ -15,8 +15,11 @@ AstilCodex.Providers
 │   └── ProviderProfileValidator
 ├── OpenAICompatible
 │   ├── OpenAICompatibleChatProvider
-│   ├── streaming SSE parser
-│   └── provider health/model check
+│   └── choices/delta SSE parser
+├── Anthropic
+│   ├── AnthropicMessagesChatProvider
+│   └── content_block_delta/text_delta SSE parser
+├── ProviderFactory and shared health/model checks
 ├── Security
 │   ├── ISecretStore
 │   ├── DpapiFileSecretStore
@@ -35,16 +38,17 @@ Run on Windows from the repository root:
 dotnet run --project src/AstilCodex.ProviderSetup.Cli --configuration Release
 ```
 
-The setup utility can configure one local and one cloud profile, test `/models`, replace credentials, and remove a profile and its credential.
+The setup utility can configure one local and one cloud profile, test `/models`, replace credentials, and remove a profile and its credential. The cloud slot can use either an OpenAI-compatible service or native Anthropic Claude.
 
 Default examples:
 
 ```text
-Local: http://127.0.0.1:11434/v1/chat/completions
-Cloud: https://api.openai.com/v1/chat/completions
+Local compatible:  http://127.0.0.1:11434/v1/chat/completions
+Cloud compatible:  https://api.openai.com/v1/chat/completions
+Anthropic Claude:  https://api.anthropic.com/v1/messages
 ```
 
-These are editable examples, not mandatory vendors. Enter the exact endpoint and model ID documented by the selected compatible service.
+These are editable examples. Enter a model ID available to the selected account. Native Anthropic setup defaults to `claude-sonnet-5`, but the setup health check lists models actually available to the API key.
 
 Restart `AstilCodex.Core.Host` after changing provider settings. The host loads configuration at startup and retains `mock.local` as a fallback when no eligible provider profile is configured.
 
@@ -88,7 +92,8 @@ The provider receives conversation text only after deterministic routing has sel
 - Plain HTTP is accepted only for `localhost` or an IP loopback address.
 - Credentials embedded in endpoint URLs are rejected.
 - URL fragments are rejected.
-- API keys are sent only in the `Authorization: Bearer` header.
+- OpenAI-compatible keys are sent only in the `Authorization: Bearer` header.
+- Anthropic keys are sent only in `x-api-key`, with `anthropic-version: 2023-06-01`.
 - Credentials are never included in JSON request bodies, settings files, SQLite memory, or provider error messages.
 - Streaming responses have cancellation and configurable timeout support.
 
@@ -96,11 +101,11 @@ The provider receives conversation text only after deterministic routing has sel
 
 - Provider setup is a local console utility; Unity settings UI is the next provider submilestone.
 - Only one enabled local and one enabled cloud profile are supported.
-- The current health check expects an OpenAI-compatible `/models` response.
+- Health checks expect a `/v1/models`-style response from compatible and Anthropic profiles.
 - Provider usage and cost accounting are not implemented.
 - Context selection currently includes a fixed system instruction and up to 24 recent messages.
 - Profile changes require restarting the core host.
 
 ## Tests
 
-The production self-test suite uses fake in-memory HTTP handlers and does not contact or charge a real provider. It covers endpoint security, settings persistence, secret separation, SSE streaming, model health, local/cloud selection, cancellation, and Windows DPAPI when running on Windows.
+The production self-test suite uses fake in-memory HTTP handlers and does not contact or charge a real provider. It covers endpoint security, settings persistence, secret separation, OpenAI-compatible streaming, Anthropic Messages streaming and headers, model health, local/cloud selection, cancellation, and Windows DPAPI when running on Windows.

@@ -10,7 +10,7 @@ src/
 ├── AstilCodex.Core.Host/       Versioned named-pipe host for the UI client
 ├── AstilCodex.Ipc/             Framing, serialization, server, and client
 ├── AstilCodex.Memory/          SQLite conversation persistence
-├── AstilCodex.Providers/       OpenAI-compatible streaming and secure settings
+├── AstilCodex.Providers/       OpenAI-compatible + Anthropic streaming and secrets
 ├── AstilCodex.ProviderSetup.Cli/ Windows DPAPI provider setup utility
 ├── AstilCodex.Tools/           Permission-controlled tools (planned)
 └── AstilCodex.UnityClient/     Unity 6.3/VRM desktop-client foundation

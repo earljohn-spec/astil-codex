@@ -19,9 +19,3 @@ public sealed class ProviderException : Exception
 
     public HttpStatusCode? StatusCode { get; }
 }
-
-public sealed record ProviderHealthResult(
-    bool IsHealthy,
-    string Status,
-    bool ConfiguredModelFound,
-    IReadOnlyList<string> AvailableModels);

@@ -30,6 +30,7 @@ Astil Codex is a working **pre-alpha foundation**. The first standalone Windows 
 - Persistent SQLite conversation history
 - Build-safe custom placeholder shader
 - OpenAI-compatible local/cloud streaming provider adapter
+- Native Anthropic Claude Messages API streaming adapter
 - Windows DPAPI credential storage and provider setup utility
 - Provider health/model checks and mock fallback
 - Automated routing, permission, memory, IPC, provider, and cancellation tests
@@ -120,13 +121,13 @@ Useful CLI commands:
 
 ## Configure a real AI provider
 
-Astil Codex supports OpenAI-compatible local and cloud endpoints. On Windows, run:
+Astil Codex supports OpenAI-compatible local/cloud endpoints and the native Anthropic Claude Messages API. On Windows, run:
 
 ```powershell
 dotnet run --project src/AstilCodex.ProviderSetup.Cli --configuration Release
 ```
 
-The utility stores non-secret settings under `%LOCALAPPDATA%\AstilCodex\config` and encrypts API keys separately with current-user Windows DPAPI. Remote endpoints must use HTTPS; plain HTTP is allowed only for loopback local-model servers. Restart the core host after changing profiles.
+The utility can configure a loopback OpenAI-compatible local model, an OpenAI-compatible HTTPS cloud service, or native Anthropic Claude. It stores non-secret settings under `%LOCALAPPDATA%\AstilCodex\config` and encrypts API keys separately with current-user Windows DPAPI. Remote endpoints must use HTTPS; plain HTTP is allowed only for loopback local-model servers. Restart the core host after changing profiles.
 
 No API key is required to build, test, or run Astil Codex in mock mode. Never paste credentials into source files, GitHub, logs, or chat messages.
 

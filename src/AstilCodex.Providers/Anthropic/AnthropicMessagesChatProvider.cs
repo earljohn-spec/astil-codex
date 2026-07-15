@@ -7,12 +7,17 @@ using System.Text.Json.Serialization;
 using AstilCodex.Contracts;
 using AstilCodex.Core.Providers;
 using AstilCodex.Providers.Configuration;
+using AstilCodex.Providers.OpenAICompatible;
 using AstilCodex.Providers.Security;
 
-namespace AstilCodex.Providers.OpenAICompatible;
+namespace AstilCodex.Providers.Anthropic;
 
-public sealed class OpenAICompatibleChatProvider : IChatProvider, IProviderHealthCheck, IDisposable
+public sealed class AnthropicMessagesChatProvider :
+    IChatProvider,
+    IProviderHealthCheck,
+    IDisposable
 {
+    private const string AnthropicVersion = "2023-06-01";
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
@@ -22,16 +27,23 @@ public sealed class OpenAICompatibleChatProvider : IChatProvider, IProviderHealt
     private readonly ISecretStore _secretStore;
     private readonly HttpClient _httpClient;
     private readonly bool _ownsHttpClient;
-    private readonly Uri _chatEndpoint;
+    private readonly Uri _messagesEndpoint;
 
-    public OpenAICompatibleChatProvider(
+    public AnthropicMessagesChatProvider(
         ProviderProfile profile,
         ISecretStore secretStore,
         HttpClient? httpClient = null)
     {
         _profile = profile ?? throw new ArgumentNullException(nameof(profile));
         _secretStore = secretStore ?? throw new ArgumentNullException(nameof(secretStore));
-        _chatEndpoint = ProviderProfileValidator.ValidateAndGetEndpoint(profile);
+        if (profile.Protocol != ProviderProtocol.AnthropicMessages)
+        {
+            throw new ArgumentException(
+                "Anthropic provider requires the AnthropicMessages protocol.",
+                nameof(profile));
+        }
+
+        _messagesEndpoint = ProviderProfileValidator.ValidateAndGetEndpoint(profile);
         _httpClient = httpClient ?? new HttpClient();
         _ownsHttpClient = httpClient is null;
     }
@@ -46,16 +58,18 @@ public sealed class OpenAICompatibleChatProvider : IChatProvider, IProviderHealt
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(_profile.TimeoutSeconds));
 
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, _chatEndpoint);
-        await ApplyAuthenticationAsync(httpRequest, timeout.Token).ConfigureAwait(false);
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, _messagesEndpoint);
+        await ApplyHeadersAsync(httpRequest, timeout.Token).ConfigureAwait(false);
         httpRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
-        httpRequest.Headers.UserAgent.ParseAdd("AstilCodex/0.1-prealpha");
 
-        var body = new ChatCompletionRequest(
+        var body = new AnthropicMessageRequest(
             _profile.Model,
-            BuildMessages(request),
+            _profile.MaxOutputTokens,
             Stream: true,
-            MaxTokens: _profile.MaxOutputTokens);
+            SystemPrompt:
+                "You are Astil Codex, an original privacy-conscious desktop assistant. " +
+                "Be accurate, concise, and explicit about uncertainty. Never claim a tool action occurred unless the core confirms it.",
+            Messages: BuildMessages(request));
         httpRequest.Content = new StringContent(
             JsonSerializer.Serialize(body, SerializerOptions),
             Encoding.UTF8,
@@ -71,9 +85,7 @@ public sealed class OpenAICompatibleChatProvider : IChatProvider, IProviderHealt
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            throw new ProviderException(
-                "provider_timeout",
-                $"Provider '{_profile.DisplayName}' did not respond within {_profile.TimeoutSeconds} seconds.");
+            throw CreateTimeoutException();
         }
         catch (HttpRequestException exception)
         {
@@ -133,11 +145,6 @@ public sealed class OpenAICompatibleChatProvider : IChatProvider, IProviderHealt
                         continue;
                     }
 
-                    if (string.Equals(data, "[DONE]", StringComparison.Ordinal))
-                    {
-                        break;
-                    }
-
                     var chunk = ParseStreamChunk(data);
                     if (!string.IsNullOrEmpty(chunk))
                     {
@@ -159,10 +166,9 @@ public sealed class OpenAICompatibleChatProvider : IChatProvider, IProviderHealt
     public async Task<ProviderHealthResult> CheckHealthAsync(
         CancellationToken cancellationToken = default)
     {
-        var endpoint = ProviderProfileValidator.GetModelsEndpoint(_chatEndpoint);
+        var endpoint = ProviderProfileValidator.GetModelsEndpoint(_messagesEndpoint);
         using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
-        await ApplyAuthenticationAsync(request, cancellationToken).ConfigureAwait(false);
-        request.Headers.UserAgent.ParseAdd("AstilCodex/0.1-prealpha");
+        await ApplyHeadersAsync(request, cancellationToken).ConfigureAwait(false);
 
         HttpResponseMessage response;
         try
@@ -171,11 +177,7 @@ public sealed class OpenAICompatibleChatProvider : IChatProvider, IProviderHealt
         }
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
         {
-            return new ProviderHealthResult(
-                false,
-                "unreachable",
-                false,
-                Array.Empty<string>());
+            return new ProviderHealthResult(false, "unreachable", false, Array.Empty<string>());
         }
 
         using (response)
@@ -207,13 +209,15 @@ public sealed class OpenAICompatibleChatProvider : IChatProvider, IProviderHealt
         }
     }
 
-    private async ValueTask ApplyAuthenticationAsync(
+    private async ValueTask ApplyHeadersAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(_profile.SecretId))
         {
-            return;
+            throw new ProviderException(
+                "missing_provider_secret",
+                $"No credential identifier is configured for provider '{_profile.DisplayName}'.");
         }
 
         var secret = await _secretStore.GetAsync(_profile.SecretId, cancellationToken)
@@ -225,29 +229,24 @@ public sealed class OpenAICompatibleChatProvider : IChatProvider, IProviderHealt
                 $"No credential is stored for provider '{_profile.DisplayName}'.");
         }
 
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", secret);
+        request.Headers.Add("x-api-key", secret);
+        request.Headers.Add("anthropic-version", AnthropicVersion);
+        request.Headers.UserAgent.ParseAdd("AstilCodex/0.1-prealpha");
     }
 
-    private static IReadOnlyList<ChatCompletionMessage> BuildMessages(ChatRequest request)
+    private static IReadOnlyList<AnthropicMessage> BuildMessages(ChatRequest request)
     {
-        var messages = new List<ChatCompletionMessage>
-        {
-            new(
-                "system",
-                "You are Astil Codex, an original privacy-conscious desktop assistant. " +
-                "Be accurate, concise, and explicit about uncertainty. Never claim a tool action occurred unless the core confirms it.")
-        };
-
+        var messages = new List<AnthropicMessage>();
         foreach (var message in request.History.TakeLast(24))
         {
             var role = message.Role.ToLowerInvariant();
-            if (role is "user" or "assistant" or "system")
+            if (role is "user" or "assistant")
             {
-                messages.Add(new ChatCompletionMessage(role, message.Content));
+                messages.Add(new AnthropicMessage(role, message.Content));
             }
         }
 
-        messages.Add(new ChatCompletionMessage("user", request.UserText));
+        messages.Add(new AnthropicMessage("user", request.UserText));
         return messages;
     }
 
@@ -257,28 +256,42 @@ public sealed class OpenAICompatibleChatProvider : IChatProvider, IProviderHealt
         {
             using var document = JsonDocument.Parse(json);
             var root = document.RootElement;
-            if (!root.TryGetProperty("choices", out var choices) ||
-                choices.ValueKind != JsonValueKind.Array ||
-                choices.GetArrayLength() == 0)
+            if (!root.TryGetProperty("type", out var eventType))
             {
                 return null;
             }
 
-            var choice = choices[0];
-            if (!choice.TryGetProperty("delta", out var delta) ||
-                !delta.TryGetProperty("content", out var content) ||
-                content.ValueKind != JsonValueKind.String)
+            if (string.Equals(eventType.GetString(), "error", StringComparison.Ordinal))
+            {
+                throw new ProviderException(
+                    "provider_stream_error",
+                    "Anthropic reported an error while streaming the response.");
+            }
+
+            if (!string.Equals(
+                eventType.GetString(),
+                "content_block_delta",
+                StringComparison.Ordinal))
             {
                 return null;
             }
 
-            return content.GetString();
+            if (!root.TryGetProperty("delta", out var delta) ||
+                !delta.TryGetProperty("type", out var deltaType) ||
+                !string.Equals(deltaType.GetString(), "text_delta", StringComparison.Ordinal) ||
+                !delta.TryGetProperty("text", out var text) ||
+                text.ValueKind != JsonValueKind.String)
+            {
+                return null;
+            }
+
+            return text.GetString();
         }
         catch (JsonException exception)
         {
             throw new ProviderException(
                 "malformed_provider_stream",
-                "Provider returned malformed streaming JSON.",
+                "Anthropic returned malformed streaming JSON.",
                 innerException: exception);
         }
     }
@@ -319,29 +332,33 @@ public sealed class OpenAICompatibleChatProvider : IChatProvider, IProviderHealt
             HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden => "provider_authentication_failed",
             HttpStatusCode.TooManyRequests => "provider_rate_limited",
             HttpStatusCode.NotFound => "provider_endpoint_or_model_not_found",
+            (HttpStatusCode)529 => "provider_overloaded",
             _ when (int)response.StatusCode >= 500 => "provider_server_error",
             _ => "provider_request_failed"
         };
         var message = response.StatusCode switch
         {
             HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden =>
-                "Provider authentication failed. Check the locally stored credential.",
+                "Anthropic authentication failed. Check the locally stored API key.",
             HttpStatusCode.TooManyRequests =>
-                "Provider rate limit was reached. Wait before retrying.",
+                "Anthropic rate limit was reached. Wait before retrying.",
             HttpStatusCode.NotFound =>
-                "Provider endpoint or model was not found.",
-            _ => $"Provider returned HTTP {(int)response.StatusCode}."
+                "Anthropic endpoint or model was not found.",
+            (HttpStatusCode)529 =>
+                "Anthropic is temporarily overloaded.",
+            _ => $"Anthropic returned HTTP {(int)response.StatusCode}."
         };
         return new ProviderException(code, message, response.StatusCode);
     }
 
-    private sealed record ChatCompletionRequest(
+    private sealed record AnthropicMessageRequest(
         [property: JsonPropertyName("model")] string Model,
-        [property: JsonPropertyName("messages")] IReadOnlyList<ChatCompletionMessage> Messages,
+        [property: JsonPropertyName("max_tokens")] int MaxTokens,
         [property: JsonPropertyName("stream")] bool Stream,
-        [property: JsonPropertyName("max_tokens")] int MaxTokens);
+        [property: JsonPropertyName("system")] string SystemPrompt,
+        [property: JsonPropertyName("messages")] IReadOnlyList<AnthropicMessage> Messages);
 
-    private sealed record ChatCompletionMessage(
+    private sealed record AnthropicMessage(
         [property: JsonPropertyName("role")] string Role,
         [property: JsonPropertyName("content")] string Content);
 }

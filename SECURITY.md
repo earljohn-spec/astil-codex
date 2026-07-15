@@ -34,7 +34,7 @@ The current IPC host uses a versioned, length-prefixed named-pipe protocol. On W
 
 ## AI provider credentials and transport
 
-Provider profiles store only endpoint, model, limits, location, and an opaque secret identifier. API keys are encrypted separately with Windows DPAPI for the current user and are never written to profile JSON, SQLite conversation memory, Git, or provider error messages. Remote endpoints require HTTPS; plain HTTP is accepted only for loopback local-model endpoints. Endpoint URLs containing embedded credentials or fragments are rejected.
+Provider profiles store only endpoint, model, limits, protocol, location, and an opaque secret identifier. API keys are encrypted separately with Windows DPAPI for the current user and are never written to profile JSON, SQLite conversation memory, Git, request bodies, or provider error messages. OpenAI-compatible credentials use the Bearer authorization header; native Anthropic credentials use `x-api-key` with a fixed `anthropic-version` header. Remote endpoints require HTTPS; plain HTTP is accepted only for loopback local-model endpoints. Endpoint URLs containing embedded credentials or fragments are rejected.
 
 ## Unity client and avatar imports
 

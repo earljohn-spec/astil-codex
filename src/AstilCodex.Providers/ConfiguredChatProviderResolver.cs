@@ -1,7 +1,6 @@
 using AstilCodex.Contracts;
 using AstilCodex.Core.Providers;
 using AstilCodex.Providers.Configuration;
-using AstilCodex.Providers.OpenAICompatible;
 using AstilCodex.Providers.Security;
 
 namespace AstilCodex.Providers;
@@ -9,11 +8,11 @@ namespace AstilCodex.Providers;
 public sealed class ConfiguredChatProviderResolver : IChatProviderResolver, IDisposable
 {
     private readonly IChatProvider _mockProvider;
-    private readonly IReadOnlyDictionary<ProviderLocation, OpenAICompatibleChatProvider> _providers;
+    private readonly IReadOnlyDictionary<ProviderLocation, IChatProvider> _providers;
 
     private ConfiguredChatProviderResolver(
         IChatProvider mockProvider,
-        IReadOnlyDictionary<ProviderLocation, OpenAICompatibleChatProvider> providers)
+        IReadOnlyDictionary<ProviderLocation, IChatProvider> providers)
     {
         _mockProvider = mockProvider;
         _providers = providers;
@@ -37,7 +36,7 @@ public sealed class ConfiguredChatProviderResolver : IChatProviderResolver, IDis
         ArgumentNullException.ThrowIfNull(secretStore);
         ArgumentNullException.ThrowIfNull(mockProvider);
         var settings = await settingsStore.LoadAsync(cancellationToken).ConfigureAwait(false);
-        var providers = new Dictionary<ProviderLocation, OpenAICompatibleChatProvider>();
+        var providers = new Dictionary<ProviderLocation, IChatProvider>();
 
         foreach (var profile in settings.Profiles.Where(profile => profile.Enabled))
         {
@@ -49,7 +48,7 @@ public sealed class ConfiguredChatProviderResolver : IChatProviderResolver, IDis
             }
 
             var client = httpClientFactory?.Invoke(profile);
-            providers[profile.Location] = new OpenAICompatibleChatProvider(
+            providers[profile.Location] = ProviderFactory.Create(
                 profile,
                 secretStore,
                 client);
@@ -80,7 +79,7 @@ public sealed class ConfiguredChatProviderResolver : IChatProviderResolver, IDis
 
     public void Dispose()
     {
-        foreach (var provider in _providers.Values)
+        foreach (var provider in _providers.Values.OfType<IDisposable>())
         {
             provider.Dispose();
         }

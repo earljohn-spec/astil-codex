@@ -1,4 +1,5 @@
 using System.Text;
+using AstilCodex.Providers;
 using AstilCodex.Providers.Configuration;
 using AstilCodex.Providers.OpenAICompatible;
 using AstilCodex.Providers.Security;
@@ -27,8 +28,9 @@ internal static class Program
             PrintHeader(settings, settingsStore);
             Console.WriteLine("1. Configure local OpenAI-compatible provider");
             Console.WriteLine("2. Configure cloud OpenAI-compatible provider");
-            Console.WriteLine("3. Test configured provider");
-            Console.WriteLine("4. Remove configured provider");
+            Console.WriteLine("3. Configure native Anthropic Claude provider");
+            Console.WriteLine("4. Test configured provider");
+            Console.WriteLine("5. Remove configured provider");
             Console.WriteLine("0. Exit");
             Console.Write("Selection: ");
             var selection = Console.ReadLine()?.Trim();
@@ -39,6 +41,7 @@ internal static class Program
                 case "1":
                     await ConfigureAsync(
                         ProviderLocation.Local,
+                        ProviderProtocol.OpenAICompatible,
                         settings,
                         settingsStore,
                         secretStore).ConfigureAwait(false);
@@ -46,14 +49,23 @@ internal static class Program
                 case "2":
                     await ConfigureAsync(
                         ProviderLocation.Cloud,
+                        ProviderProtocol.OpenAICompatible,
                         settings,
                         settingsStore,
                         secretStore).ConfigureAwait(false);
                     break;
                 case "3":
-                    await TestAsync(settings, secretStore).ConfigureAwait(false);
+                    await ConfigureAsync(
+                        ProviderLocation.Cloud,
+                        ProviderProtocol.AnthropicMessages,
+                        settings,
+                        settingsStore,
+                        secretStore).ConfigureAwait(false);
                     break;
                 case "4":
+                    await TestAsync(settings, secretStore).ConfigureAwait(false);
+                    break;
+                case "5":
                     await RemoveAsync(settings, settingsStore, secretStore).ConfigureAwait(false);
                     break;
                 case "0":
@@ -68,23 +80,37 @@ internal static class Program
 
     private static async Task ConfigureAsync(
         ProviderLocation location,
+        ProviderProtocol protocol,
         ProviderSettingsDocument settings,
         IProviderSettingsStore settingsStore,
         ISecretStore secretStore)
     {
-        var existing = settings.Profiles.FirstOrDefault(profile => profile.Location == location);
+        var replacedProfile = settings.Profiles.FirstOrDefault(profile => profile.Location == location);
+        var existing = replacedProfile?.Protocol == protocol ? replacedProfile : null;
         var isLocal = location == ProviderLocation.Local;
-        var profileId = isLocal ? "local.default" : "cloud.default";
+        var isAnthropic = protocol == ProviderProtocol.AnthropicMessages;
+        var profileId = isLocal
+            ? "local.default"
+            : isAnthropic
+                ? "cloud.anthropic"
+                : "cloud.openai";
         var endpointDefault = existing?.ChatCompletionsEndpoint ??
             (isLocal
                 ? "http://127.0.0.1:11434/v1/chat/completions"
-                : "https://api.openai.com/v1/chat/completions");
+                : isAnthropic
+                    ? "https://api.anthropic.com/v1/messages"
+                    : "https://api.openai.com/v1/chat/completions");
+        var modelDefault = existing?.Model ?? (isAnthropic ? "claude-sonnet-5" : string.Empty);
 
-        Console.WriteLine($"Configure {location} provider");
-        var displayName = ReadWithDefault("Display name", existing?.DisplayName ??
-            (isLocal ? "Local Model" : "Cloud Model"));
-        var endpoint = ReadWithDefault("Chat-completions endpoint", endpointDefault);
-        var model = ReadWithDefault("Model ID", existing?.Model ?? string.Empty);
+        Console.WriteLine($"Configure {location} provider ({protocol})");
+        var displayName = ReadWithDefault(
+            "Display name",
+            existing?.DisplayName ??
+                (isLocal ? "Local Model" : isAnthropic ? "Anthropic Claude" : "Cloud Model"));
+        var endpoint = ReadWithDefault(
+            isAnthropic ? "Messages endpoint" : "Chat-completions endpoint",
+            endpointDefault);
+        var model = ReadWithDefault("Model ID", modelDefault);
         if (string.IsNullOrWhiteSpace(model))
         {
             Console.WriteLine("Model ID is required.");
@@ -96,10 +122,18 @@ internal static class Program
         var currentSecret = await secretStore.GetAsync(secretId).ConfigureAwait(false);
         Console.Write(
             currentSecret is null
-                ? "API key (optional for local providers; input is hidden): "
+                ? isLocal
+                    ? "API key (optional for local providers; input is hidden): "
+                    : "API key (required; input is hidden): "
                 : "New API key (leave empty to keep stored key; input is hidden): ");
         var secret = ReadSecret();
         Console.WriteLine();
+        if (!isLocal && string.IsNullOrEmpty(secret) && currentSecret is null)
+        {
+            Console.WriteLine("A cloud API key is required.");
+            Pause();
+            return;
+        }
 
         var profile = new ProviderProfile(
             profileId,
@@ -108,6 +142,7 @@ internal static class Program
             endpoint,
             model,
             string.IsNullOrEmpty(secret) && currentSecret is null ? null : secretId,
+            Protocol: protocol,
             MaxOutputTokens: existing?.MaxOutputTokens ?? 1024,
             TimeoutSeconds: existing?.TimeoutSeconds ?? 90,
             Enabled: true);
@@ -137,6 +172,12 @@ internal static class Program
             new ProviderSettingsDocument(ProviderSettingsDocument.CurrentSchemaVersion, profiles))
             .ConfigureAwait(false);
 
+        if (replacedProfile?.SecretId is not null &&
+            !string.Equals(replacedProfile.SecretId, secretId, StringComparison.Ordinal))
+        {
+            await secretStore.DeleteAsync(replacedProfile.SecretId).ConfigureAwait(false);
+        }
+
         Console.WriteLine("Provider configuration saved. API keys are not stored in providers.json.");
         Pause();
     }
@@ -152,11 +193,13 @@ internal static class Program
             return;
         }
 
+        var provider = ProviderFactory.Create(profile, secretStore);
         try
         {
-            using var provider = new OpenAICompatibleChatProvider(profile, secretStore);
+            var healthProvider = provider as IProviderHealthCheck
+                ?? throw new InvalidOperationException("Provider does not implement a health check.");
             Console.WriteLine("Testing provider without sending a chat prompt...");
-            var health = await provider.CheckHealthAsync().ConfigureAwait(false);
+            var health = await healthProvider.CheckHealthAsync().ConfigureAwait(false);
             Console.WriteLine($"Status: {health.Status}");
             Console.WriteLine($"Reachable: {health.IsHealthy}");
             Console.WriteLine($"Configured model found: {health.ConfiguredModelFound}");
@@ -173,6 +216,10 @@ internal static class Program
             exception is ProviderException or HttpRequestException or TaskCanceledException)
         {
             Console.WriteLine("Provider test failed: " + exception.Message);
+        }
+        finally
+        {
+            (provider as IDisposable)?.Dispose();
         }
 
         Pause();
@@ -216,7 +263,8 @@ internal static class Program
         for (var index = 0; index < settings.Profiles.Count; index++)
         {
             var profile = settings.Profiles[index];
-            Console.WriteLine($"{index + 1}. {profile.DisplayName} ({profile.Location})");
+            Console.WriteLine(
+                $"{index + 1}. {profile.DisplayName} ({profile.Location}, {profile.Protocol})");
         }
 
         Console.Write("Provider number: ");

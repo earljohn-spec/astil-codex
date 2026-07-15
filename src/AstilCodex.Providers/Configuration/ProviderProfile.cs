@@ -6,6 +6,12 @@ public enum ProviderLocation
     Cloud
 }
 
+public enum ProviderProtocol
+{
+    OpenAICompatible,
+    AnthropicMessages
+}
+
 public sealed record ProviderProfile(
     string ProfileId,
     string DisplayName,
@@ -13,6 +19,7 @@ public sealed record ProviderProfile(
     string ChatCompletionsEndpoint,
     string Model,
     string? SecretId,
+    ProviderProtocol Protocol = ProviderProtocol.OpenAICompatible,
     int MaxOutputTokens = 1024,
     int TimeoutSeconds = 90,
     bool Enabled = true);

@@ -10,6 +10,7 @@ using AstilCodex.Core.Host;
 using AstilCodex.Ipc;
 using AstilCodex.Memory;
 using AstilCodex.Providers;
+using AstilCodex.Providers.Anthropic;
 using AstilCodex.Providers.Configuration;
 using AstilCodex.Providers.OpenAICompatible;
 using AstilCodex.Providers.Security;
@@ -46,6 +47,8 @@ internal static class Program
             ("provider settings persist without credentials", ProviderSettingsRoundTrip),
             ("OpenAI-compatible provider streams text", OpenAiProviderStreams),
             ("provider health lists configured model", ProviderHealthListsModel),
+            ("Anthropic Messages provider streams text", AnthropicProviderStreams),
+            ("Anthropic provider health lists configured model", AnthropicHealthListsModel),
             ("provider resolver selects local and cloud profiles", ProviderResolverSelectsProfiles),
             ("provider streaming honors cancellation", ProviderStreamingHonorsCancellation),
             ("DPAPI secret storage round-trips on Windows", DpapiSecretRoundTrip)
@@ -431,8 +434,16 @@ internal static class Program
             "cloud.test",
             ProviderLocation.Cloud,
             "https://provider.example/v1/chat/completions");
+        var anthropic = NewProviderProfile(
+            "cloud.anthropic",
+            ProviderLocation.Cloud,
+            "https://api.anthropic.com/v1/messages") with
+        {
+            Protocol = ProviderProtocol.AnthropicMessages
+        };
         ProviderProfileValidator.ValidateAndGetEndpoint(local);
         ProviderProfileValidator.ValidateAndGetEndpoint(cloud);
+        ProviderProfileValidator.ValidateAndGetEndpoint(anthropic);
 
         var insecureRemote = NewProviderProfile(
             "cloud.insecure",
@@ -462,8 +473,9 @@ internal static class Program
             var profile = NewProviderProfile(
                 "cloud.test",
                 ProviderLocation.Cloud,
-                "https://provider.example/v1/chat/completions") with
+                "https://api.anthropic.com/v1/messages") with
             {
+                Protocol = ProviderProtocol.AnthropicMessages,
                 SecretId = "provider:cloud.test"
             };
             var document = new ProviderSettingsDocument(
@@ -556,6 +568,94 @@ internal static class Program
         AssertTrue(health.IsHealthy, "Provider should be healthy.");
         AssertTrue(health.ConfiguredModelFound, "Configured model should be present.");
         AssertEqual(2, health.AvailableModels.Count);
+    }
+
+    private static async Task AnthropicProviderStreams()
+    {
+        var secretStore = new InMemorySecretStore();
+        await secretStore.SetAsync("provider:anthropic.test", "anthropic-secret");
+        string? capturedBody = null;
+        var handler = new DelegateHttpMessageHandler(async (request, cancellationToken) =>
+        {
+            AssertEqual(HttpMethod.Post, request.Method);
+            AssertEqual("anthropic-secret", request.Headers.GetValues("x-api-key").Single());
+            AssertEqual("2023-06-01", request.Headers.GetValues("anthropic-version").Single());
+            capturedBody = await request.Content!.ReadAsStringAsync(cancellationToken)
+                .ConfigureAwait(false);
+            var content = new StringContent(
+                "event: message_start\n" +
+                "data: {\"type\":\"message_start\",\"message\":{\"content\":[]}}\n\n" +
+                "event: content_block_delta\n" +
+                "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Hello\"}}\n\n" +
+                "event: content_block_delta\n" +
+                "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Claude\"}}\n\n" +
+                "event: message_stop\n" +
+                "data: {\"type\":\"message_stop\"}\n\n",
+                Encoding.UTF8,
+                "text/event-stream");
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = content };
+        });
+        using var client = new HttpClient(handler);
+        using var provider = new AnthropicMessagesChatProvider(
+            NewProviderProfile(
+                "cloud.anthropic.test",
+                ProviderLocation.Cloud,
+                "https://api.anthropic.com/v1/messages") with
+            {
+                Protocol = ProviderProtocol.AnthropicMessages,
+                SecretId = "provider:anthropic.test",
+                Model = "claude-sonnet-test"
+            },
+            secretStore,
+            client);
+        var output = new StringBuilder();
+        await foreach (var chunk in provider.StreamReplyAsync(NewChatRequest()))
+        {
+            output.Append(chunk);
+        }
+
+        AssertEqual("Hello Claude", output.ToString());
+        AssertTrue(capturedBody is not null && capturedBody.Contains("claude-sonnet-test", StringComparison.Ordinal),
+            "Anthropic request did not include the configured model.");
+        AssertTrue(capturedBody!.Contains("\"system\"", StringComparison.Ordinal),
+            "Anthropic request did not include a top-level system prompt.");
+        AssertFalse(capturedBody.Contains("anthropic-secret", StringComparison.Ordinal),
+            "Anthropic credential must not appear in the JSON body.");
+    }
+
+    private static async Task AnthropicHealthListsModel()
+    {
+        var secretStore = new InMemorySecretStore();
+        await secretStore.SetAsync("provider:anthropic.health", "anthropic-secret");
+        var handler = new DelegateHttpMessageHandler((request, _) =>
+        {
+            AssertEqual(HttpMethod.Get, request.Method);
+            AssertEqual("/v1/models", request.RequestUri!.AbsolutePath);
+            AssertEqual("anthropic-secret", request.Headers.GetValues("x-api-key").Single());
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    "{\"data\":[{\"id\":\"claude-sonnet-test\"}]}",
+                    Encoding.UTF8,
+                    "application/json")
+            });
+        });
+        using var client = new HttpClient(handler);
+        using var provider = new AnthropicMessagesChatProvider(
+            NewProviderProfile(
+                "cloud.anthropic.health",
+                ProviderLocation.Cloud,
+                "https://api.anthropic.com/v1/messages") with
+            {
+                Protocol = ProviderProtocol.AnthropicMessages,
+                SecretId = "provider:anthropic.health",
+                Model = "claude-sonnet-test"
+            },
+            secretStore,
+            client);
+        var health = await provider.CheckHealthAsync().ConfigureAwait(false);
+        AssertTrue(health.IsHealthy, "Anthropic provider should be healthy.");
+        AssertTrue(health.ConfiguredModelFound, "Configured Anthropic model should be present.");
     }
 
     private static async Task ProviderResolverSelectsProfiles()
